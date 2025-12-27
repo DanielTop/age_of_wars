@@ -195,6 +195,17 @@
             margin-left: 3px;
         }
 
+        .level {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 0 2px;
+        }
+
         #statsBar {
             display: flex;
             justify-content: center;
@@ -473,25 +484,26 @@
         const BALANCE = {
             startGold: 50,
             baseIncome: 8,
-            incomePerLevel: 4,
+            incomePerLevel: 2,  // +2 дохода за уровень (макс +38)
             baseHp: 1500,
-            baseHpPerUpgrade: 300,
+            baseHpPerUpgrade: 100,  // +100 HP за уровень (макс +1900)
             turret: {
-                baseCooldown: 1800, cooldownReduction: 150, minCooldown: 800,
-                baseDamage: 15, damagePerLevel: 10, damagePerEra: 6, range: 350, maxLevel: 5
+                baseCooldown: 1800, cooldownReduction: 40, minCooldown: 600,  // кулдаун снижается плавно
+                baseDamage: 15, damagePerLevel: 3, damagePerEra: 6, range: 350, maxLevel: 20
             },
             upgrades: {
-                turret: { baseCost: 100, costMultiplier: 2.2 },
-                income: { baseCost: 120, costMultiplier: 2.5 },
-                baseHp: { baseCost: 150, costMultiplier: 2.3 }
+                // Стоимость растёт плавно: уровень 1=базовая, уровень 20 примерно в 15-20 раз дороже
+                turret: { baseCost: 25, costMultiplier: 1.18 },   // 25 → 460 на 20 уровне
+                income: { baseCost: 30, costMultiplier: 1.20 },   // 30 → 710 на 20 уровне
+                baseHp: { baseCost: 35, costMultiplier: 1.17 }    // 35 → 560 на 20 уровне
             },
-            maxUpgradeLevel: 5,
+            maxUpgradeLevel: 20,
             unitUpgrades: {
-                attack: { baseCost: 80, costMultiplier: 2.0, bonusPerLevel: 0.15 },
-                health: { baseCost: 80, costMultiplier: 2.0, bonusPerLevel: 0.15 },
-                regen: { baseCost: 100, costMultiplier: 2.2, regenPerLevel: 2 }
+                attack: { baseCost: 20, costMultiplier: 1.18, bonusPerLevel: 0.05 },   // +5% атаки за уровень (макс +95%)
+                health: { baseCost: 20, costMultiplier: 1.18, bonusPerLevel: 0.05 },   // +5% HP за уровень (макс +95%)
+                regen: { baseCost: 25, costMultiplier: 1.20, regenPerLevel: 1 }        // +1 реген за уровень (макс +19)
             },
-            maxUnitUpgradeLevel: 5,
+            maxUnitUpgradeLevel: 20,
             special: { cost: 250, cooldown: 45000, unitDamage: 100, baseDamage: 50 },
             xp: { perDamageToUnit: 0.15, perDamageToBase: 0.25, perKill: 5 },
             ai: { minSpawnDelay: 2500, maxSpawnDelay: 4500, evolutionTimes: [0, 60000, 150000, 280000, 450000] },
@@ -1078,39 +1090,41 @@
             });
 
             // Апгрейды базы (Турель, Доход, HP базы)
-            const baseUpgradeKeys = uiNum === 1 ? ['4','5','6'] : ['0','-','='];
+            const baseUpgradeKeys = uiNum === 1 ? ['Q','W','R'] : ['I','O','P'];
             const baseUpgradeTypes = ['turret', 'income', 'baseHp'];
-            const baseUpgradeLabels = ['Турель', 'Доход', 'HP базы'];
+            const baseUpgradeLabels = ['Турель', 'Доход', 'HP'];
             document.querySelectorAll(`[data-player="${uiNum}"][data-upgrade]`).forEach((btn, i) => {
                 const type = baseUpgradeTypes[i];
                 const level = p[type + 'Level'];
                 const maxLevel = BALANCE.maxUpgradeLevel;
                 if (level >= maxLevel) {
-                    btn.innerHTML = `${baseUpgradeLabels[i]} MAX`;
+                    btn.innerHTML = `${baseUpgradeLabels[i]} <span class="level">MAX</span>`;
                     btn.disabled = true;
+                    btn.classList.remove('affordable');
                 } else {
                     const cost = getUpgradeCost(type, level);
-                    btn.innerHTML = `${baseUpgradeLabels[i]} ${cost}g <span class="hotkey">${baseUpgradeKeys[i]}</span>`;
+                    btn.innerHTML = `${baseUpgradeLabels[i]} <span class="level">${level}</span> ${cost}g <span class="hotkey">${baseUpgradeKeys[i]}</span>`;
                     btn.classList.toggle('affordable', p.gold >= cost);
                     btn.disabled = p.gold < cost;
                 }
             });
 
             // Апгрейды юнитов (Атака, HP, Реген)
-            const unitUpgradeKeys = uiNum === 1 ? ['Q','W','R'] : ['O','P','['];
+            const unitUpgradeKeys = uiNum === 1 ? ['A','S','D'] : ['J','K','L'];
             const unitUpgradeTypes = ['attack', 'health', 'regen'];
-            const unitUpgradeLabels = ['Атака', 'HP', 'Реген'];
+            const unitUpgradeLabels = ['Атк', 'ХП', 'Рег'];
             document.querySelectorAll(`[data-player="${uiNum}"][data-unit-upgrade]`).forEach((btn, i) => {
                 const type = unitUpgradeTypes[i];
                 const key = 'unit' + type.charAt(0).toUpperCase() + type.slice(1) + 'Level';
                 const level = p[key];
                 const maxLevel = BALANCE.maxUnitUpgradeLevel;
                 if (level >= maxLevel) {
-                    btn.innerHTML = `${unitUpgradeLabels[i]} MAX`;
+                    btn.innerHTML = `${unitUpgradeLabels[i]} <span class="level">MAX</span>`;
                     btn.disabled = true;
+                    btn.classList.remove('affordable');
                 } else {
                     const cost = getUnitUpgradeCost(type, level);
-                    btn.innerHTML = `${unitUpgradeLabels[i]} ${cost}g <span class="hotkey">${unitUpgradeKeys[i]}</span>`;
+                    btn.innerHTML = `${unitUpgradeLabels[i]} <span class="level">${level}</span> ${cost}g <span class="hotkey">${unitUpgradeKeys[i]}</span>`;
                     btn.classList.toggle('affordable', p.gold >= cost);
                     btn.disabled = p.gold < cost;
                 }
@@ -1275,13 +1289,14 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Турель
+            // Турель (размер растёт плавно с 1 до 20 уровня)
             const turretLevel = player.turretLevel;
-            const turretSize = 12 + turretLevel * 2;
+            const turretSize = 10 + turretLevel * 0.6;  // от 10.6 до 22
+            const barrelLen = 18 + turretLevel * 0.8;   // от 18.8 до 34
             ctx.fillStyle = '#333';
             ctx.fillRect(x - turretSize / 2, 255, turretSize, turretSize);
             ctx.fillStyle = '#555';
-            ctx.fillRect(x + dir * turretSize / 2, 258, (20 + turretLevel * 3) * dir, 8);
+            ctx.fillRect(x + dir * turretSize / 2, 258, barrelLen * dir, 6 + turretLevel * 0.15);
 
             // Флаг
             ctx.fillStyle = '#5C4033';
