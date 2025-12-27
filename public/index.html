@@ -850,7 +850,8 @@
                 color: isP1 ? def.color : shiftColor(def.color),
                 size: def.size,
                 direction: isP1 ? 1 : -1,
-                regen: p.unitRegenLevel * BALANCE.unitUpgrades.regen.regenPerLevel
+                regen: p.unitRegenLevel * BALANCE.unitUpgrades.regen.regenPerLevel,
+                name: def.name
             });
             return true;
         }
@@ -1175,19 +1176,354 @@
         }
 
         function drawUnit(unit) {
-            const { x, y, size, color, hp, maxHp, owner } = unit;
+            const { x, y, size, color, hp, maxHp, owner, name } = unit;
+            const isEnemy = owner === 2;
+            const dir = isEnemy ? -1 : 1;
+
+            // Тень
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 5, size / 2, size / 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(x, y);
+
+            switch(name) {
+                // ===== КАМЕННЫЙ ВЕК =====
+                case 'Дубинщик':
+                    drawBody('#8B4513', size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    ctx.fillStyle = '#4a3728';
+                    for(let i = -2; i <= 2; i++) {
+                        ctx.beginPath();
+                        ctx.ellipse(i * 3, -size - 10, 3, 7, i * 0.2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.fillStyle = '#5C4033';
+                    ctx.save();
+                    ctx.translate(dir * 12, -size/2);
+                    ctx.rotate(dir * 0.4);
+                    ctx.fillRect(-2, -20, 5, 28);
+                    ctx.fillStyle = '#3a2515';
+                    ctx.beginPath();
+                    ctx.arc(0, -22, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                    break;
+
+                case 'Копейщик':
+                    drawBody('#A0522D', size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    ctx.fillStyle = '#8B0000';
+                    ctx.fillRect(-7, -size - 8, 14, 4);
+                    ctx.fillStyle = '#5C4033';
+                    ctx.fillRect(dir * 10, -size - 15, 3, 40);
+                    ctx.fillStyle = '#888';
+                    ctx.beginPath();
+                    ctx.moveTo(dir * 11.5, -size - 15);
+                    ctx.lineTo(dir * 11.5 - 5, -size - 25);
+                    ctx.lineTo(dir * 11.5 + 5, -size - 25);
+                    ctx.fill();
+                    break;
+
+                case 'Камнемёт':
+                    ctx.fillStyle = '#6B4423';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 + 3, size/2, size/2.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size + 2, size/3.2, isEnemy);
+                    ctx.strokeStyle = '#5C4033';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(dir * 8, -size/2);
+                    ctx.quadraticCurveTo(dir * 22, -size, dir * 14, -size - 12);
+                    ctx.stroke();
+                    ctx.fillStyle = '#666';
+                    ctx.beginPath();
+                    ctx.arc(dir * 14, -size - 12, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                // ===== СРЕДНЕВЕКОВЬЕ =====
+                case 'Мечник':
+                    drawBody('#4169E1', size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    ctx.fillStyle = '#708090';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 4, size/3, Math.PI, 0);
+                    ctx.fill();
+                    ctx.fillStyle = '#C0C0C0';
+                    ctx.fillRect(dir * 12, -size/2 - 12, 3, 22);
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(dir * 12 - 3, -size/2 + 8, 9, 4);
+                    break;
+
+                case 'Рыцарь':
+                    ctx.fillStyle = '#B8B8B8';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2, size/2, size/1.7, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#A8A8A8';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 3, size/2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(-5, -size - 4, 10, 3);
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size - size/2 - 5, 3, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#C0C0C0';
+                    ctx.fillRect(dir * 14, -size - 5, 4, 30);
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(dir * 14 - 4, -size/2 + 8, 12, 5);
+                    break;
+
+                case 'Лучник':
+                    ctx.fillStyle = '#228B22';
+                    ctx.beginPath();
+                    ctx.moveTo(-8, -size + 8);
+                    ctx.lineTo(8, -size + 8);
+                    ctx.lineTo(6, 0);
+                    ctx.lineTo(-6, 0);
+                    ctx.fill();
+                    drawBody('#228B22', size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    ctx.fillStyle = '#1a6b1a';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 2, size/3, Math.PI * 0.75, Math.PI * 0.25);
+                    ctx.fill();
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(dir * 14, -size/2, 15, -Math.PI/2, Math.PI/2);
+                    ctx.stroke();
+                    break;
+
+                // ===== ЭПОХА ПОРОХА =====
+                case 'Мушкетёр':
+                    drawBody('#8B0000', size);
+                    ctx.fillStyle = '#FFD700';
+                    for(let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(0, -size/2 - 6 + i*6, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.beginPath();
+                    ctx.moveTo(-10, -size - 4);
+                    ctx.lineTo(10, -size - 4);
+                    ctx.lineTo(0, -size - 14);
+                    ctx.fill();
+                    ctx.fillStyle = '#5C4033';
+                    ctx.fillRect(dir * 8, -size/2, 20, 4);
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(dir * 8 + dir * 16, -size/2 - 1, 6, 6);
+                    break;
+
+                case 'Кавалерия':
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/3 + 5, size/1.4, size/2.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(dir * 18, -size/2 + 3, 7, 10, dir * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#6B4423';
+                    const legAnim = Math.sin(Date.now() / 100) * 4;
+                    ctx.fillRect(-10, -3, 4, 12 + legAnim);
+                    ctx.fillRect(6, -3, 4, 12 - legAnim);
+                    ctx.fillStyle = '#DAA520';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 - 10, 7, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size - 5, 5, isEnemy);
+                    ctx.strokeStyle = '#C0C0C0';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(dir * 10, -size/2 - 8);
+                    ctx.quadraticCurveTo(dir * 22, -size/2, dir * 18, -size/2 + 12);
+                    ctx.stroke();
+                    break;
+
+                case 'Канонир':
+                    ctx.fillStyle = '#2F4F4F';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 + 4, size/2, size/2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size + 5, size/3.5, isEnemy);
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(-6, -size + 2, 12, 4);
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(dir * 4, -size/2 + 6, 16, 8);
+                    ctx.fillStyle = '#333';
+                    ctx.beginPath();
+                    ctx.arc(dir * 8, -size/2 + 16, 5, 0, Math.PI * 2);
+                    ctx.arc(dir * 16, -size/2 + 16, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                // ===== СОВРЕМЕННОСТЬ =====
+                case 'Солдат':
+                    drawBody('#556B2F', size);
+                    ctx.fillStyle = '#3d4f22';
+                    ctx.beginPath();
+                    ctx.arc(-4, -size/2 - 4, 3, 0, Math.PI * 2);
+                    ctx.arc(3, -size/2 + 2, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    ctx.fillStyle = '#556B2F';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 2, size/2.5, Math.PI, 0);
+                    ctx.fill();
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.fillRect(dir * 7, -size/2 - 4, 18, 4);
+                    ctx.fillRect(dir * 7, -size/2, 3, 8);
+                    break;
+
+                case 'Танк':
+                    ctx.fillStyle = '#2a2a2a';
+                    ctx.fillRect(-size/2, -6, size, 14);
+                    ctx.fillStyle = '#3d3d3d';
+                    for(let i = 0; i < 4; i++) {
+                        ctx.beginPath();
+                        ctx.arc(-size/2 + 8 + i * (size-16)/3, 0, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.fillStyle = '#3D5C3D';
+                    ctx.beginPath();
+                    ctx.moveTo(-size/2 + 4, -6);
+                    ctx.lineTo(size/2 - 4, -6);
+                    ctx.lineTo(size/2 - 8, -size/2 + 5);
+                    ctx.lineTo(-size/2 + 8, -size/2 + 5);
+                    ctx.fill();
+                    ctx.fillStyle = '#4a6b4a';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2, size/3.5, size/4.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#2F4F2F';
+                    ctx.fillRect(dir * 4, -size/2 - 3, dir * 25, 5);
+                    break;
+
+                case 'Снайпер':
+                    ctx.fillStyle = '#708090';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2, size/2.2, size/1.8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    ctx.fillStyle = '#5a6a5a';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 1, size/2.2, Math.PI * 0.7, Math.PI * 0.3);
+                    ctx.fill();
+                    ctx.fillStyle = '#2a2a2a';
+                    ctx.fillRect(dir * 4, -size/2 - 2, 28, 3);
+                    break;
+
+                // ===== БУДУЩЕЕ =====
+                case 'Киборг':
+                    ctx.fillStyle = '#00CED1';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2, size/2.2, size/1.8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#4a4a4a';
+                    ctx.beginPath();
+                    ctx.arc(-5, -size/2, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillRect(3, -size/2 - 8, 6, 16);
+                    ctx.fillStyle = '#FFE4C4';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 2, size/3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.arc(dir * 3, -size - 3, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(dir * 8, -size/2 - 2, 16, 5);
+                    ctx.fillStyle = '#00FFFF';
+                    ctx.fillRect(dir * 22, -size/2 - 1, 4, 3);
+                    break;
+
+                case 'Мех':
+                    ctx.fillStyle = '#6a5acd';
+                    ctx.fillRect(-12, -8, 7, 18);
+                    ctx.fillRect(5, -8, 7, 18);
+                    ctx.fillStyle = '#9400D3';
+                    ctx.beginPath();
+                    ctx.moveTo(-size/2, -8);
+                    ctx.lineTo(size/2, -8);
+                    ctx.lineTo(size/2 - 4, -size/2 - 8);
+                    ctx.lineTo(-size/2 + 4, -size/2 - 8);
+                    ctx.fill();
+                    ctx.fillStyle = '#5a3a7a';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 - 12, size/3.5, size/4.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(0,255,255,0.5)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 - 12, size/5, size/6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#555';
+                    ctx.fillRect(-size/2 + 4, -size/2 - 20, 5, 12);
+                    ctx.fillRect(size/2 - 9, -size/2 - 20, 5, 12);
+                    break;
+
+                case 'Дрон':
+                    const hover = Math.sin(Date.now() / 150) * 3;
+                    ctx.translate(0, hover - 5);
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 + 5, size/1.8, size/3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(150,150,150,0.6)';
+                    const propAngle = Date.now() / 25;
+                    ctx.beginPath();
+                    ctx.ellipse(-10, -size/2 - 3, 8, 2, propAngle, 0, Math.PI * 2);
+                    ctx.ellipse(10, -size/2 - 3, 8, 2, -propAngle, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(-2, -size/2 + 8, 4, 10);
+                    ctx.fillStyle = '#00FF00';
+                    ctx.beginPath();
+                    ctx.arc(dir * 6, -size/2 + 5, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                default:
+                    drawBody(color, size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+            }
+
+            ctx.restore();
+
+            // HP бар
+            const hpPercent = Math.max(0, hp / maxHp);
+            const barWidth = 28;
+            const barY = y - size - size/2 - 5;
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x - barWidth/2 - 1, barY - 1, barWidth + 2, 7);
+            ctx.fillStyle = isEnemy ? '#FF4444' : '#44FF44';
+            ctx.fillRect(x - barWidth/2, barY, barWidth * hpPercent, 5);
+        }
+
+        function drawBody(color, size) {
             ctx.fillStyle = color;
             ctx.beginPath();
-            ctx.arc(x, y - size/2, size/2, 0, Math.PI * 2);
+            ctx.ellipse(0, -size/2, size/2.2, size/1.8, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.fillRect(x - size/4, y - size/4, size/6, size/2);
-            ctx.fillRect(x + size/10, y - size/4, size/6, size/2);
+        }
 
-            const hpPercent = hp / maxHp;
-            ctx.fillStyle = '#333';
-            ctx.fillRect(x - size/2, y - size - 10, size, 5);
-            ctx.fillStyle = owner === 1 ? '#38ef7d' : '#ef473a';
-            ctx.fillRect(x - size/2, y - size - 10, size * hpPercent, 5);
+        function drawHead2(hx, hy, r, isEnemy) {
+            ctx.fillStyle = '#FFE4C4';
+            ctx.beginPath();
+            ctx.arc(hx, hy, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(hx + (isEnemy ? -2 : 2), hy - 1, 1.5, 0, Math.PI * 2);
+            ctx.fill();
         }
     </script>
 </body>
