@@ -484,12 +484,12 @@
         const BALANCE = {
             startGold: 50,
             baseIncome: 8,
-            incomePerLevel: 2,  // +2 дохода за уровень (макс +38)
+            incomePerLevel: 5,  // +5 дохода за уровень (макс +95, итого 103 gold/sec)
             baseHp: 1500,
-            baseHpPerUpgrade: 100,  // +100 HP за уровень (макс +1900)
+            baseHpPerUpgrade: 250,  // +250 HP за уровень (макс +4750, итого 6250 HP)
             turret: {
-                baseCooldown: 1800, cooldownReduction: 40, minCooldown: 600,  // кулдаун снижается плавно
-                baseDamage: 15, damagePerLevel: 3, damagePerEra: 6, range: 350, maxLevel: 20
+                baseCooldown: 1800, cooldownReduction: 55, minCooldown: 500,  // кулдаун: 1800→755ms
+                baseDamage: 15, damagePerLevel: 8, damagePerEra: 10, range: 350, maxLevel: 20
             },
             upgrades: {
                 // Стоимость растёт плавно: уровень 1=базовая, уровень 20 примерно в 15-20 раз дороже
@@ -499,9 +499,9 @@
             },
             maxUpgradeLevel: 20,
             unitUpgrades: {
-                attack: { baseCost: 20, costMultiplier: 1.18, bonusPerLevel: 0.05 },   // +5% атаки за уровень (макс +95%)
-                health: { baseCost: 20, costMultiplier: 1.18, bonusPerLevel: 0.05 },   // +5% HP за уровень (макс +95%)
-                regen: { baseCost: 25, costMultiplier: 1.20, regenPerLevel: 1 }        // +1 реген за уровень (макс +19)
+                attack: { baseCost: 20, costMultiplier: 1.18, bonusPerLevel: 0.12 },   // +12% атаки за уровень (макс +228%)
+                health: { baseCost: 20, costMultiplier: 1.18, bonusPerLevel: 0.12 },   // +12% HP за уровень (макс +228%)
+                regen: { baseCost: 25, costMultiplier: 1.20, regenPerLevel: 3 }        // +3 реген за уровень (макс +57)
             },
             maxUnitUpgradeLevel: 20,
             special: { cost: 250, cooldown: 45000, unitDamage: 100, baseDamage: 50 },
