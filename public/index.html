@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age of Wars Online</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #gameContainer {
+            position: relative;
+            border: 3px solid #ffd700;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        #gameCanvas { display: block; }
+
+        #ui {
+            width: 1000px;
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        #topBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 8px;
+        }
+
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .resource span { color: #ffd700; }
+        .resource.p2 span { color: #f5576c; }
+
+        #eraDisplay, #eraDisplay2 {
+            text-align: center;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #eraDisplay2 {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+        }
+
+        #playerInfo {
+            text-align: center;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #playerInfo.p2 {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+        }
+
+        #healthBars {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .health-container { width: 45%; }
+
+        .health-label {
+            font-size: 12px;
+            margin-bottom: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .health-bar {
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+
+        .player-health { background: linear-gradient(90deg, #00b09b, #96c93d); }
+        .enemy-health { background: linear-gradient(90deg, #cb2d3e, #ef473a); }
+
+        #xpBar { margin-bottom: 8px; }
+
+        .xp-container {
+            height: 12px;
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+
+        #controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+            color: #fff;
+            min-width: 100px;
+            user-select: none;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn.affordable {
+            box-shadow: 0 0 10px rgba(56, 239, 125, 0.5);
+        }
+
+        .unit-btn { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .upgrade-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .evolve-btn { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
+        .special-btn { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); }
+
+        .separator {
+            width: 2px;
+            background: #444;
+            margin: 0 5px;
+            align-self: stretch;
+        }
+
+        /* Меню */
+        #menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        #menu h1 {
+            font-size: 64px;
+            color: #ffd700;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        #menu .subtitle {
+            font-size: 24px;
+            color: #f5576c;
+            margin-bottom: 30px;
+        }
+
+        #status {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .menu-btn {
+            padding: 20px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+            min-width: 300px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: #fff;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .menu-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .controls-info {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .controls-info h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        /* Game Over */
+        #gameOver {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        #gameOver h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        #gameOver.victory h2 { color: #38ef7d; }
+        #gameOver.defeat h2 { color: #ef473a; }
+
+        #gameOver .stats {
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        #restartBtn {
+            padding: 15px 40px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .hotkey {
+            display: inline-block;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-left: 3px;
+        }
+
+        #statsBar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        #statsBar span { color: #ffd700; }
+    </style>
+</head>
+<body>
+    <!-- МЕНЮ -->
+    <div id="menu">
+        <h1>Age of Wars</h1>
+        <div class="subtitle">Online Multiplayer</div>
+        <div id="status">Нажми "Играть" чтобы найти соперника</div>
+        <button class="menu-btn" id="playBtn">Играть онлайн</button>
+
+        <div class="controls-info">
+            <h3>Управление</h3>
+            <div>1, 2, 3 - Создать юнитов</div>
+            <div>Q, W, R - Апгрейды базы (турель, доход, HP)</div>
+            <div>A, S, D - Апгрейды юнитов (атака, HP, реген)</div>
+            <div>E - Эволюция в новую эру</div>
+            <div>Пробел - Спецспособность</div>
+        </div>
+    </div>
+
+    <!-- ИГРА -->
+    <div id="gameArea" style="display: none;">
+        <h1>Age of Wars <span id="playerBadge"></span></h1>
+
+        <div id="gameContainer">
+            <canvas id="gameCanvas" width="1000" height="400"></canvas>
+        </div>
+
+        <div id="ui">
+            <div id="healthBars">
+                <div class="health-container">
+                    <div class="health-label">
+                        <span id="p1Label">Игрок 1 (Синий)</span>
+                        <span id="p1HpNum"></span>
+                    </div>
+                    <div class="health-bar">
+                        <div class="health-fill player-health" id="p1HealthBar"></div>
+                    </div>
+                </div>
+                <div class="health-container">
+                    <div class="health-label">
+                        <span id="p2Label">Игрок 2 (Красный)</span>
+                        <span id="p2HpNum"></span>
+                    </div>
+                    <div class="health-bar">
+                        <div class="health-fill enemy-health" id="p2HealthBar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="statsBar">
+                Убийств: <span id="killCount">0</span> |
+                Время: <span id="gameTime">0:00</span>
+            </div>
+
+            <div id="xpBar">
+                <div class="health-label">
+                    <span>Опыт</span>
+                    <span id="xpText">0 / 120</span>
+                </div>
+                <div class="xp-container">
+                    <div class="xp-fill" id="xpFill"></div>
+                </div>
+            </div>
+
+            <div id="topBar">
+                <div class="resource">Золото: <span id="gold">50</span></div>
+                <div id="playerInfo">Игрок 1</div>
+                <div id="eraDisplay">Каменный век</div>
+                <div class="resource">+<span id="income">8</span>/с</div>
+            </div>
+
+            <div id="controls"></div>
+        </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameOver">
+        <h2 id="gameOverTitle"></h2>
+        <div class="stats" id="gameOverStats"></div>
+        <button id="restartBtn">В меню</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let myPlayerNum = 0;
+        let gameState = null;
+
+        // ==================== ЭРЫ (для отрисовки) ====================
+        const ERAS = [
+            { name: 'Каменный век', xpRequired: 0,
+              units: [{ name: 'Дубинщик', cost: 20 }, { name: 'Копейщик', cost: 40 }, { name: 'Камнемёт', cost: 55 }] },
+            { name: 'Средневековье', xpRequired: 120,
+              units: [{ name: 'Мечник', cost: 30 }, { name: 'Рыцарь', cost: 75 }, { name: 'Лучник', cost: 50 }] },
+            { name: 'Эпоха пороха', xpRequired: 350,
+              units: [{ name: 'Мушкетёр', cost: 45 }, { name: 'Кавалерия', cost: 90 }, { name: 'Канонир', cost: 120 }] },
+            { name: 'Современность', xpRequired: 700,
+              units: [{ name: 'Солдат', cost: 55 }, { name: 'Танк', cost: 180 }, { name: 'Снайпер', cost: 100 }] },
+            { name: 'Будущее', xpRequired: 1200,
+              units: [{ name: 'Киборг', cost: 80 }, { name: 'Мех', cost: 250 }, { name: 'Дрон', cost: 130 }] }
+        ];
+
+        const BALANCE = {
+            upgrades: {
+                turret: { baseCost: 100, costMultiplier: 2.2 },
+                income: { baseCost: 120, costMultiplier: 2.5 },
+                baseHp: { baseCost: 150, costMultiplier: 2.3 }
+            },
+            unitUpgrades: {
+                attack: { baseCost: 80, costMultiplier: 2.0 },
+                health: { baseCost: 80, costMultiplier: 2.0 },
+                regen: { baseCost: 100, costMultiplier: 2.2 }
+            },
+            maxUpgradeLevel: 5,
+            maxUnitUpgradeLevel: 5,
+            special: { cost: 250 }
+        };
+
+        // ==================== UI ====================
+        document.getElementById('playBtn').onclick = () => {
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('status').textContent = 'Поиск соперника...';
+            socket.emit('joinGame');
+        };
+
+        document.getElementById('restartBtn').onclick = () => {
+            location.reload();
+        };
+
+        // ==================== SOCKET EVENTS ====================
+        socket.on('joined', (data) => {
+            myPlayerNum = data.playerNum;
+            if (data.waiting) {
+                document.getElementById('status').textContent = `Ты - Игрок ${myPlayerNum}. Ожидаем соперника...`;
+            }
+        });
+
+        socket.on('gameStart', (data) => {
+            gameState = data.game;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'flex';
+            document.getElementById('gameArea').style.flexDirection = 'column';
+            document.getElementById('gameArea').style.alignItems = 'center';
+
+            const badge = document.getElementById('playerBadge');
+            badge.textContent = `(Ты - Игрок ${myPlayerNum})`;
+            badge.style.color = myPlayerNum === 1 ? '#38ef7d' : '#f5576c';
+
+            const info = document.getElementById('playerInfo');
+            info.textContent = `Игрок ${myPlayerNum}`;
+            if (myPlayerNum === 2) info.classList.add('p2');
+
+            updateUI();
+            buildControls();
+            requestAnimationFrame(render);
+        });
+
+        socket.on('gameState', (state) => {
+            gameState = state;
+            updateUI();
+        });
+
+        socket.on('gameOver', (data) => {
+            const overlay = document.getElementById('gameOver');
+            const title = document.getElementById('gameOverTitle');
+            const stats = document.getElementById('gameOverStats');
+
+            if (data.winner === myPlayerNum) {
+                overlay.className = 'victory';
+                title.textContent = 'ПОБЕДА!';
+            } else {
+                overlay.className = 'defeat';
+                title.textContent = 'ПОРАЖЕНИЕ';
+            }
+
+            const me = gameState.players[myPlayerNum];
+            stats.textContent = `Убийств: ${me.kills} | Эра: ${ERAS[me.era].name}`;
+            overlay.style.display = 'flex';
+        });
+
+        socket.on('opponentLeft', () => {
+            alert('Соперник отключился!');
+            location.reload();
+        });
+
+        // ==================== CONTROLS ====================
+        function buildControls() {
+            const controls = document.getElementById('controls');
+            controls.innerHTML = '';
+
+            // Юниты
+            for (let i = 0; i < 3; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'btn unit-btn';
+                btn.dataset.unit = i;
+                btn.innerHTML = `Unit ${i+1} <span class="hotkey">${i+1}</span>`;
+                btn.onclick = () => sendAction('spawnUnit', { unitIndex: i });
+                controls.appendChild(btn);
+            }
+
+            controls.appendChild(createSeparator());
+
+            // Апгрейды базы
+            const baseUpgrades = [
+                { type: 'turret', label: 'Турель', key: 'Q' },
+                { type: 'income', label: 'Доход', key: 'W' },
+                { type: 'baseHp', label: 'HP базы', key: 'R' }
+            ];
+            baseUpgrades.forEach(u => {
+                const btn = document.createElement('button');
+                btn.className = 'btn upgrade-btn';
+                btn.dataset.upgrade = u.type;
+                btn.innerHTML = `${u.label} <span class="hotkey">${u.key}</span>`;
+                btn.onclick = () => sendAction('upgrade', { upgradeType: u.type });
+                controls.appendChild(btn);
+            });
+
+            controls.appendChild(createSeparator());
+
+            // Апгрейды юнитов
+            const unitUpgrades = [
+                { type: 'attack', label: 'Атака', key: 'A' },
+                { type: 'health', label: 'HP', key: 'S' },
+                { type: 'regen', label: 'Реген', key: 'D' }
+            ];
+            unitUpgrades.forEach(u => {
+                const btn = document.createElement('button');
+                btn.className = 'btn upgrade-btn';
+                btn.dataset.unitUpgrade = u.type;
+                btn.innerHTML = `${u.label} <span class="hotkey">${u.key}</span>`;
+                btn.onclick = () => sendAction('upgrade', { upgradeType: u.type });
+                controls.appendChild(btn);
+            });
+
+            controls.appendChild(createSeparator());
+
+            // Эволюция
+            const evolveBtn = document.createElement('button');
+            evolveBtn.className = 'btn evolve-btn';
+            evolveBtn.id = 'evolveBtn';
+            evolveBtn.innerHTML = `Эволюция <span class="hotkey">E</span>`;
+            evolveBtn.onclick = () => sendAction('evolve', {});
+            controls.appendChild(evolveBtn);
+
+            // Спецспособность
+            const specialBtn = document.createElement('button');
+            specialBtn.className = 'btn special-btn';
+            specialBtn.id = 'specialBtn';
+            specialBtn.innerHTML = `Спец 250g <span class="hotkey">Space</span>`;
+            specialBtn.onclick = () => sendAction('special', {});
+            controls.appendChild(specialBtn);
+        }
+
+        function createSeparator() {
+            const sep = document.createElement('div');
+            sep.className = 'separator';
+            return sep;
+        }
+
+        function sendAction(type, payload) {
+            socket.emit('action', { type, payload });
+        }
+
+        // ==================== KEYBOARD ====================
+        document.addEventListener('keydown', (e) => {
+            if (!gameState) return;
+
+            const key = e.key.toLowerCase();
+            if (key === '1') sendAction('spawnUnit', { unitIndex: 0 });
+            else if (key === '2') sendAction('spawnUnit', { unitIndex: 1 });
+            else if (key === '3') sendAction('spawnUnit', { unitIndex: 2 });
+            else if (key === 'q') sendAction('upgrade', { upgradeType: 'turret' });
+            else if (key === 'w') sendAction('upgrade', { upgradeType: 'income' });
+            else if (key === 'r') sendAction('upgrade', { upgradeType: 'baseHp' });
+            else if (key === 'a') sendAction('upgrade', { upgradeType: 'attack' });
+            else if (key === 's') sendAction('upgrade', { upgradeType: 'health' });
+            else if (key === 'd') sendAction('upgrade', { upgradeType: 'regen' });
+            else if (key === 'e') sendAction('evolve', {});
+            else if (key === ' ') { sendAction('special', {}); e.preventDefault(); }
+        });
+
+        // ==================== UPDATE UI ====================
+        function updateUI() {
+            if (!gameState) return;
+
+            const me = gameState.players[myPlayerNum];
+            const enemy = gameState.players[myPlayerNum === 1 ? 2 : 1];
+
+            // Золото и доход
+            document.getElementById('gold').textContent = Math.floor(me.gold);
+            document.getElementById('income').textContent = me.income;
+
+            // Эра
+            document.getElementById('eraDisplay').textContent = ERAS[me.era].name;
+
+            // XP
+            const nextEra = ERAS[me.era + 1];
+            const xpNeeded = nextEra ? nextEra.xpRequired : me.xp;
+            document.getElementById('xpText').textContent = `${Math.floor(me.xp)} / ${xpNeeded}`;
+            document.getElementById('xpFill').style.width = `${(me.xp / xpNeeded) * 100}%`;
+
+            // HP баз
+            const p1 = gameState.players[1];
+            const p2 = gameState.players[2];
+            document.getElementById('p1HpNum').textContent = `${Math.floor(p1.base.hp)} / ${p1.base.maxHp}`;
+            document.getElementById('p2HpNum').textContent = `${Math.floor(p2.base.hp)} / ${p2.base.maxHp}`;
+            document.getElementById('p1HealthBar').style.width = `${(p1.base.hp / p1.base.maxHp) * 100}%`;
+            document.getElementById('p2HealthBar').style.width = `${(p2.base.hp / p2.base.maxHp) * 100}%`;
+
+            // Статы
+            document.getElementById('killCount').textContent = me.kills;
+            const secs = Math.floor(gameState.gameTime / 1000);
+            document.getElementById('gameTime').textContent = `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
+
+            // Обновляем кнопки юнитов
+            const era = ERAS[me.era];
+            document.querySelectorAll('[data-unit]').forEach((btn, i) => {
+                const unit = era.units[i];
+                btn.innerHTML = `${unit.name} ${unit.cost}g <span class="hotkey">${i+1}</span>`;
+                btn.classList.toggle('affordable', me.gold >= unit.cost);
+                btn.disabled = me.gold < unit.cost;
+            });
+
+            // Эволюция
+            const evolveBtn = document.getElementById('evolveBtn');
+            if (me.era >= ERAS.length - 1) {
+                evolveBtn.textContent = 'MAX';
+                evolveBtn.disabled = true;
+            } else {
+                const next = ERAS[me.era + 1];
+                evolveBtn.innerHTML = `Эволюция (${next.xpRequired} XP) <span class="hotkey">E</span>`;
+                evolveBtn.disabled = me.xp < next.xpRequired;
+                evolveBtn.classList.toggle('affordable', me.xp >= next.xpRequired);
+            }
+
+            // Спец
+            const specialBtn = document.getElementById('specialBtn');
+            if (me.specialCooldown > 0) {
+                specialBtn.innerHTML = `Спец (${Math.ceil(me.specialCooldown/1000)}с)`;
+                specialBtn.disabled = true;
+            } else {
+                specialBtn.innerHTML = `Спец 250g <span class="hotkey">Space</span>`;
+                specialBtn.disabled = me.gold < 250;
+                specialBtn.classList.toggle('affordable', me.gold >= 250);
+            }
+        }
+
+        // ==================== RENDER ====================
+        function render() {
+            if (!gameState) {
+                requestAnimationFrame(render);
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Фон
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(0.6, '#87CEEB');
+            gradient.addColorStop(0.6, '#228B22');
+            gradient.addColorStop(1, '#1a5f1a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Базы
+            drawBase(gameState.players[1], '#4169E1', '#1E3A8A');
+            drawBase(gameState.players[2], '#DC143C', '#8B0000');
+
+            // Юниты
+            for (const unit of gameState.units) {
+                drawUnit(unit);
+            }
+
+            // Снаряды
+            for (const proj of gameState.projectiles) {
+                ctx.beginPath();
+                ctx.arc(proj.targetX, proj.targetY, 5, 0, Math.PI * 2);
+                ctx.fillStyle = proj.owner === 1 ? '#FFD700' : '#FF4500';
+                ctx.fill();
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        function drawBase(player, color, darkColor) {
+            const x = player.base.x;
+            const baseWidth = 60;
+            const baseHeight = 120;
+
+            // Основание
+            ctx.fillStyle = darkColor;
+            ctx.fillRect(x - baseWidth/2, 280, baseWidth, baseHeight);
+
+            // Верх
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x - baseWidth/2 - 10, 280);
+            ctx.lineTo(x, 220);
+            ctx.lineTo(x + baseWidth/2 + 10, 280);
+            ctx.closePath();
+            ctx.fill();
+
+            // Турель
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - 8, 250, 16, 30);
+            ctx.beginPath();
+            ctx.arc(x, 250, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // HP бар над базой
+            const hpPercent = player.base.hp / player.base.maxHp;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - 40, 200, 80, 10);
+            ctx.fillStyle = player.num === 1 ? '#38ef7d' : '#ef473a';
+            ctx.fillRect(x - 40, 200, 80 * hpPercent, 10);
+        }
+
+        function drawUnit(unit) {
+            const x = unit.x;
+            const y = unit.y;
+            const size = unit.size;
+
+            // Тело
+            ctx.fillStyle = unit.color;
+            ctx.beginPath();
+            ctx.arc(x, y - size/2, size/2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ноги
+            ctx.fillRect(x - size/4, y - size/4, size/6, size/2);
+            ctx.fillRect(x + size/10, y - size/4, size/6, size/2);
+
+            // HP бар
+            const hpPercent = unit.hp / unit.maxHp;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - size/2, y - size - 10, size, 5);
+            ctx.fillStyle = unit.owner === 1 ? '#38ef7d' : '#ef473a';
+            ctx.fillRect(x - size/2, y - size - 10, size * hpPercent, 5);
+        }
+
+        // Старт рендера
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
