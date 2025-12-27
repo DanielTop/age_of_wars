@@ -559,6 +559,8 @@
                 players: { 1: createPlayerState(1), 2: createPlayerState(2) },
                 units: [],
                 projectiles: [],
+                effects: [],
+                damageNumbers: [],
                 gameTime: 0,
                 winner: null
             };
@@ -740,6 +742,16 @@
             // Снаряды
             game.projectiles = game.projectiles.filter(p => { p.life -= delta; return p.life > 0; });
 
+            // Эффекты
+            game.effects = game.effects.filter(e => { e.timer--; return e.timer > 0; });
+
+            // Числа урона
+            game.damageNumbers = game.damageNumbers.filter(d => {
+                d.timer--;
+                d.y -= 1;
+                return d.timer > 0;
+            });
+
             // Победа
             if (game.players[1].base.hp <= 0) {
                 game.winner = 2;
@@ -918,9 +930,23 @@
             p.specialCooldown = BALANCE.special.cooldown;
 
             const enemyNum = playerNum === 1 ? 2 : 1;
-            game.units.forEach(u => { if (u.owner === enemyNum) u.hp -= BALANCE.special.unitDamage; });
-            game.players[enemyNum].base.hp -= BALANCE.special.baseDamage;
+            game.units.forEach(u => {
+                if (u.owner === enemyNum) {
+                    u.hp -= BALANCE.special.unitDamage;
+                    addDamageNumber(u.x, u.y - 30, BALANCE.special.unitDamage, '#FF6600');
+                }
+            });
+            const enemyBase = game.players[enemyNum].base;
+            enemyBase.hp -= BALANCE.special.baseDamage;
+            addDamageNumber(enemyBase.x, 180, BALANCE.special.baseDamage, '#FF6600');
+
+            // Добавляем эффект
+            game.effects.push({ type: 'special', x: canvas.width / 2, y: 200, timer: 40 });
             return true;
+        }
+
+        function addDamageNumber(x, y, damage, color) {
+            game.damageNumbers.push({ x, y, damage, color, timer: 45 });
         }
 
         function doAction(playerNum, type, payload) {
@@ -1051,6 +1077,45 @@
                 btn.disabled = p.gold < unit.cost;
             });
 
+            // Апгрейды базы (Турель, Доход, HP базы)
+            const baseUpgradeKeys = uiNum === 1 ? ['4','5','6'] : ['0','-','='];
+            const baseUpgradeTypes = ['turret', 'income', 'baseHp'];
+            const baseUpgradeLabels = ['Турель', 'Доход', 'HP базы'];
+            document.querySelectorAll(`[data-player="${uiNum}"][data-upgrade]`).forEach((btn, i) => {
+                const type = baseUpgradeTypes[i];
+                const level = p[type + 'Level'];
+                const maxLevel = BALANCE.maxUpgradeLevel;
+                if (level >= maxLevel) {
+                    btn.innerHTML = `${baseUpgradeLabels[i]} MAX`;
+                    btn.disabled = true;
+                } else {
+                    const cost = getUpgradeCost(type, level);
+                    btn.innerHTML = `${baseUpgradeLabels[i]} ${cost}g <span class="hotkey">${baseUpgradeKeys[i]}</span>`;
+                    btn.classList.toggle('affordable', p.gold >= cost);
+                    btn.disabled = p.gold < cost;
+                }
+            });
+
+            // Апгрейды юнитов (Атака, HP, Реген)
+            const unitUpgradeKeys = uiNum === 1 ? ['Q','W','R'] : ['O','P','['];
+            const unitUpgradeTypes = ['attack', 'health', 'regen'];
+            const unitUpgradeLabels = ['Атака', 'HP', 'Реген'];
+            document.querySelectorAll(`[data-player="${uiNum}"][data-unit-upgrade]`).forEach((btn, i) => {
+                const type = unitUpgradeTypes[i];
+                const key = 'unit' + type.charAt(0).toUpperCase() + type.slice(1) + 'Level';
+                const level = p[key];
+                const maxLevel = BALANCE.maxUnitUpgradeLevel;
+                if (level >= maxLevel) {
+                    btn.innerHTML = `${unitUpgradeLabels[i]} MAX`;
+                    btn.disabled = true;
+                } else {
+                    const cost = getUnitUpgradeCost(type, level);
+                    btn.innerHTML = `${unitUpgradeLabels[i]} ${cost}g <span class="hotkey">${unitUpgradeKeys[i]}</span>`;
+                    btn.classList.toggle('affordable', p.gold >= cost);
+                    btn.disabled = p.gold < cost;
+                }
+            });
+
             // Эволюция
             const evolveBtn = document.getElementById('evolveBtn' + uiNum);
             if (p.era >= ERAS.length - 1) {
@@ -1149,30 +1214,92 @@
                 ctx.fillStyle = proj.owner === 1 ? '#FFD700' : '#FF4500';
                 ctx.fill();
             }
+
+            // Эффекты
+            for (const e of game.effects) {
+                ctx.globalAlpha = e.timer / 40;
+                if (e.type === 'special') {
+                    const radius = (40 - e.timer) * 20;
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#FF6600';
+                    ctx.lineWidth = 10;
+                    ctx.stroke();
+                } else if (e.type === 'spawn') {
+                    const radius = (20 - e.timer) * 2;
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#00FF00';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            // Числа урона
+            for (const d of game.damageNumbers) {
+                ctx.globalAlpha = d.timer / 45;
+                ctx.fillStyle = d.color;
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('-' + d.damage, d.x, d.y);
+                ctx.globalAlpha = 1;
+            }
         }
 
         function drawBase(player, color, darkColor) {
             const x = player.base.x;
-            ctx.fillStyle = darkColor;
-            ctx.fillRect(x - 30, 280, 60, 120);
-            ctx.fillStyle = color;
+            const isP1 = player.num === 1;
+            const dir = isP1 ? 1 : -1;
+            const era = ERAS[player.era];
+            const eraColors = ['#8B4513', '#708090', '#4A4A4A', '#2F4F4F', '#4B0082'];
+
+            // Тень
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
             ctx.beginPath();
-            ctx.moveTo(x - 40, 280);
-            ctx.lineTo(x, 220);
-            ctx.lineTo(x + 40, 280);
-            ctx.closePath();
-            ctx.fill();
-            ctx.fillStyle = '#333';
-            ctx.fillRect(x - 8, 250, 16, 30);
-            ctx.beginPath();
-            ctx.arc(x, 250, 12, 0, Math.PI * 2);
+            ctx.ellipse(x, 355, 50, 10, 0, 0, Math.PI * 2);
             ctx.fill();
 
+            // Основание замка
+            ctx.fillStyle = eraColors[player.era];
+            ctx.fillRect(x - 45, 245, 90, 105);
+
+            // Крыша
+            ctx.beginPath();
+            ctx.moveTo(x - 55, 245);
+            ctx.lineTo(x, 190);
+            ctx.lineTo(x + 55, 245);
+            ctx.fillStyle = isP1 ? '#006400' : '#8B0000';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Турель
+            const turretLevel = player.turretLevel;
+            const turretSize = 12 + turretLevel * 2;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - turretSize / 2, 255, turretSize, turretSize);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(x + dir * turretSize / 2, 258, (20 + turretLevel * 3) * dir, 8);
+
+            // Флаг
+            ctx.fillStyle = '#5C4033';
+            ctx.fillRect(x - 2, 170, 4, 25);
+            const wave = Math.sin(Date.now() / 200) * 3;
+            ctx.fillStyle = isP1 ? '#00FF00' : '#FF0000';
+            ctx.beginPath();
+            ctx.moveTo(x + 2, 170);
+            ctx.lineTo(x + 25 + wave, 175);
+            ctx.lineTo(x + 2, 182);
+            ctx.fill();
+
+            // HP бар
             const hpPercent = Math.max(0, player.base.hp / player.base.maxHp);
             ctx.fillStyle = '#333';
-            ctx.fillRect(x - 40, 200, 80, 10);
-            ctx.fillStyle = player.num === 1 ? '#38ef7d' : '#ef473a';
-            ctx.fillRect(x - 40, 200, 80 * hpPercent, 10);
+            ctx.fillRect(x - 40, 160, 80, 10);
+            ctx.fillStyle = isP1 ? '#38ef7d' : '#ef473a';
+            ctx.fillRect(x - 40, 160, 80 * hpPercent, 10);
         }
 
         function drawUnit(unit) {
