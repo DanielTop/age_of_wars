@@ -341,9 +341,174 @@
             60% { transform: translateX(-3px); }
             80% { transform: translateX(3px); }
         }
+
+        /* ===== ГЛАВНОЕ МЕНЮ ===== */
+        #mainMenu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        #mainMenu h1 {
+            font-size: 64px;
+            color: #ffd700;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.3);
+            margin-bottom: 20px;
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 4px 4px 8px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.3); }
+            to { text-shadow: 4px 4px 8px rgba(0,0,0,0.5), 0 0 60px rgba(255,215,0,0.6); }
+        }
+
+        #mainMenu .subtitle {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 50px;
+        }
+
+        .menu-btn {
+            padding: 20px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+            min-width: 300px;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .menu-btn.single {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: #fff;
+        }
+
+        .menu-btn.multi {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+        }
+
+        .menu-controls {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .menu-controls h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .controls-grid {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+        }
+
+        .player-controls {
+            background: rgba(0,0,0,0.3);
+            padding: 15px 25px;
+            border-radius: 10px;
+        }
+
+        .player-controls h4 {
+            color: #38ef7d;
+            margin-bottom: 8px;
+        }
+
+        .player-controls.p2 h4 {
+            color: #f5576c;
+        }
+
+        /* ===== UI ДЛЯ 2 ИГРОКОВ ===== */
+        #player2UI {
+            display: none;
+            width: 1000px;
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 2px solid #f5576c;
+        }
+
+        #player2UI #topBar2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 8px;
+        }
+
+        #player2UI .resource span { color: #f5576c; }
+
+        #player2UI #eraDisplay2 {
+            text-align: center;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #player2UI #controls2 {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #player2UI .unit-btn { background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); }
+        #player2UI .upgrade-btn { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
     </style>
 </head>
 <body>
+    <!-- ГЛАВНОЕ МЕНЮ -->
+    <div id="mainMenu">
+        <h1>Age of Wars Evolution</h1>
+        <div class="subtitle">Стратегия в реальном времени</div>
+
+        <button class="menu-btn single" onclick="startGame('single')">1 Игрок</button>
+        <button class="menu-btn multi" onclick="startGame('multi')">2 Игрока</button>
+
+        <div class="menu-controls">
+            <h3>Управление</h3>
+            <div class="controls-grid">
+                <div class="player-controls">
+                    <h4>Игрок 1 (Синий)</h4>
+                    <div>1, 2, 3 - Юниты</div>
+                    <div>Q, W, R - Апгрейды базы</div>
+                    <div>A, S, D - Апгрейды юнитов</div>
+                    <div>E - Эволюция | Пробел - Спец</div>
+                </div>
+                <div class="player-controls p2">
+                    <h4>Игрок 2 (Красный)</h4>
+                    <div>7, 8, 9 - Юниты</div>
+                    <div>I, O, P - Апгрейды базы</div>
+                    <div>J, K, L - Апгрейды юнитов</div>
+                    <div>U - Эволюция | Enter - Спец</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <h1>Age of Wars Evolution</h1>
 
     <div id="gameContainer">
@@ -403,6 +568,27 @@
         </div>
 
         <div id="controls"></div>
+    </div>
+
+    <!-- UI ИГРОКА 2 (для режима 2 игроков) -->
+    <div id="player2UI">
+        <div id="xpBar2">
+            <div class="health-label">
+                <span>Опыт (Игрок 2)</span>
+                <span id="xpText2">0 / 100</span>
+            </div>
+            <div class="xp-container">
+                <div class="xp-fill" id="xpFill2" style="background: linear-gradient(90deg, #f5576c, #f093fb);"></div>
+            </div>
+        </div>
+
+        <div id="topBar2">
+            <div class="resource">Золото: <span id="gold2">100</span></div>
+            <div id="eraDisplay2">Каменный век</div>
+            <div class="resource">+<span id="income2">8</span>/с</div>
+        </div>
+
+        <div id="controls2"></div>
     </div>
 
     <script>
@@ -531,10 +717,34 @@
         let game = {};
         let gameStartTime = 0;
         let cachedButtons = {};
+        let cachedButtons2 = {};
         let isProcessingClick = false;
         let lastTime = 0;
         let screenShake = 0;
         let gameSpeed = 1;
+        let gameMode = 'single'; // 'single' или 'multi'
+
+        // ==================== ЗАПУСК ИГРЫ ====================
+        function startGame(mode) {
+            gameMode = mode;
+            document.getElementById('mainMenu').style.display = 'none';
+
+            if (mode === 'multi') {
+                document.getElementById('player2UI').style.display = 'block';
+                document.getElementById('waveInfo').style.display = 'none';
+            } else {
+                document.getElementById('player2UI').style.display = 'none';
+                document.getElementById('waveInfo').style.display = 'block';
+            }
+
+            initGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function showMenu() {
+            document.getElementById('mainMenu').style.display = 'flex';
+            document.getElementById('player2UI').style.display = 'none';
+        }
 
         function initGame() {
             game = {
@@ -565,6 +775,24 @@
                 enemyGold: BALANCE.startGold,
                 enemySpawnTimer: 3000,
 
+                // Игрок 2 (для мультиплеера)
+                p2: {
+                    gold: BALANCE.startGold,
+                    xp: 0,
+                    era: 0,
+                    income: BALANCE.baseIncome,
+                    turretLevel: 1,
+                    incomeLevel: 1,
+                    baseHpLevel: 1,
+                    unitAttackLevel: 1,
+                    unitHealthLevel: 1,
+                    unitRegenLevel: 0,
+                    specialCooldown: 0,
+                    kills: 0,
+                    comboCount: 0,
+                    comboTimer: 0
+                },
+
                 // Волны
                 wave: 1,
                 waveTimer: BALANCE.waves.timeBetweenWaves,
@@ -587,6 +815,7 @@
             gameStartTime = Date.now();
             screenShake = 0;
             cachedButtons = {};
+            cachedButtons2 = {};
 
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('pauseOverlay').style.display = 'none';
@@ -594,15 +823,20 @@
 
             updateUI();
             renderControls();
+            if (gameMode === 'multi') {
+                renderControls2();
+                updateUI2();
+            }
         }
 
         // ==================== ЮНИТЫ ====================
         function spawnUnit(unitType, isEnemy = false, isBoss = false) {
-            const era = isEnemy ? game.enemyEra : game.era;
+            const era = isEnemy ? (gameMode === 'multi' ? game.p2.era : game.enemyEra) : game.era;
             const unitData = ERAS[era].units[unitType];
 
             if (!unitData) return false;
 
+            // Проверка золота
             if (!isEnemy) {
                 isProcessingClick = true;
                 if (game.gold < unitData.cost) {
@@ -611,6 +845,13 @@
                     return false;
                 }
                 game.gold -= unitData.cost;
+            } else if (gameMode === 'multi') {
+                // Игрок 2 в мультиплеере
+                if (game.p2.gold < unitData.cost) {
+                    showFloatingText(850, 300, 'Мало золота!', '#FF6666');
+                    return false;
+                }
+                game.p2.gold -= unitData.cost;
             }
 
             // Бонусы от улучшений
@@ -619,6 +860,11 @@
                 bonusDamage = 1 + (game.unitAttackLevel - 1) * BALANCE.unitUpgrades.attack.bonusPerLevel;
                 bonusHp = 1 + (game.unitHealthLevel - 1) * BALANCE.unitUpgrades.health.bonusPerLevel;
                 regenRate = game.unitRegenLevel * BALANCE.unitUpgrades.regen.regenPerLevel;
+            } else if (gameMode === 'multi') {
+                // Бонусы игрока 2
+                bonusDamage = 1 + (game.p2.unitAttackLevel - 1) * BALANCE.unitUpgrades.attack.bonusPerLevel;
+                bonusHp = 1 + (game.p2.unitHealthLevel - 1) * BALANCE.unitUpgrades.health.bonusPerLevel;
+                regenRate = game.p2.unitRegenLevel * BALANCE.unitUpgrades.regen.regenPerLevel;
             }
 
             // Босс-множители
@@ -799,6 +1045,131 @@
             return true;
         }
 
+        // ==================== ИГРОК 2 (мультиплеер) ====================
+        function evolve2() {
+            if (gameMode !== 'multi') return;
+            if (game.p2.era >= 4) return;
+            const nextEra = ERAS[game.p2.era + 1];
+            if (game.p2.xp >= nextEra.xpRequired) {
+                game.p2.era++;
+                game.enemyEra = game.p2.era;
+                screenShake = 20;
+
+                game.effects.push({
+                    type: 'enemyEvolve',
+                    x: game.enemyBase.x,
+                    y: 150,
+                    timer: 120,
+                    text: ERAS[game.p2.era].name
+                });
+
+                game.p2.gold += 50;
+                showFloatingText(850, 250, '+50 бонус!', '#FFD700');
+
+                updateUI2();
+                cachedButtons2 = {};
+                renderControls2();
+            }
+        }
+
+        function getUpgradeCost2(type) {
+            if (BALANCE.upgrades[type]) {
+                const level = type === 'turret' ? game.p2.turretLevel :
+                             type === 'income' ? game.p2.incomeLevel : game.p2.baseHpLevel;
+                return Math.floor(BALANCE.upgrades[type].baseCost * Math.pow(BALANCE.upgrades[type].costMultiplier, level - 1));
+            }
+            if (BALANCE.unitUpgrades[type]) {
+                const level = type === 'attack' ? game.p2.unitAttackLevel :
+                             type === 'health' ? game.p2.unitHealthLevel : game.p2.unitRegenLevel;
+                return Math.floor(BALANCE.unitUpgrades[type].baseCost * Math.pow(BALANCE.unitUpgrades[type].costMultiplier, level));
+            }
+            return 0;
+        }
+
+        function upgrade2(type) {
+            if (gameMode !== 'multi') return false;
+            const cost = getUpgradeCost2(type);
+            let success = false;
+
+            if (game.p2.gold < cost) {
+                showFloatingText(850, 300, 'Мало золота!', '#FF6666');
+            } else {
+                switch(type) {
+                    case 'turret':
+                        if (game.p2.turretLevel < BALANCE.maxUpgradeLevel) {
+                            game.p2.gold -= cost; game.p2.turretLevel++; success = true;
+                        }
+                        break;
+                    case 'income':
+                        if (game.p2.incomeLevel < BALANCE.maxUpgradeLevel) {
+                            game.p2.gold -= cost; game.p2.incomeLevel++;
+                            game.p2.income = BALANCE.baseIncome + (game.p2.incomeLevel - 1) * BALANCE.incomePerLevel;
+                            success = true;
+                        }
+                        break;
+                    case 'baseHp':
+                        if (game.p2.baseHpLevel < BALANCE.maxUpgradeLevel) {
+                            game.p2.gold -= cost; game.p2.baseHpLevel++;
+                            game.enemyBase.maxHp += BALANCE.baseHpPerUpgrade;
+                            game.enemyBase.hp += BALANCE.baseHpPerUpgrade;
+                            success = true;
+                        }
+                        break;
+                    case 'attack':
+                        if (game.p2.unitAttackLevel < BALANCE.maxUnitUpgradeLevel) {
+                            game.p2.gold -= cost; game.p2.unitAttackLevel++; success = true;
+                            showFloatingText(850, 250, `Атака +15%!`, '#FF6666');
+                        }
+                        break;
+                    case 'health':
+                        if (game.p2.unitHealthLevel < BALANCE.maxUnitUpgradeLevel) {
+                            game.p2.gold -= cost; game.p2.unitHealthLevel++; success = true;
+                            showFloatingText(850, 250, `Здоровье +15%!`, '#66FF66');
+                        }
+                        break;
+                    case 'regen':
+                        if (game.p2.unitRegenLevel < BALANCE.maxUnitUpgradeLevel) {
+                            game.p2.gold -= cost; game.p2.unitRegenLevel++; success = true;
+                            showFloatingText(850, 250, `Реген +2 HP/с!`, '#66FFFF');
+                        }
+                        break;
+                }
+            }
+
+            updateUI2();
+            return success;
+        }
+
+        function useSpecial2() {
+            if (gameMode !== 'multi') return false;
+
+            if (game.p2.gold < BALANCE.special.cost) {
+                showFloatingText(850, 300, 'Мало золота!', '#FF6666');
+                return false;
+            }
+            if (game.p2.specialCooldown > 0) {
+                showFloatingText(850, 300, 'Перезарядка!', '#FFAA00');
+                return false;
+            }
+
+            game.p2.gold -= BALANCE.special.cost;
+            game.p2.specialCooldown = BALANCE.special.cooldown;
+            screenShake = 30;
+
+            game.playerUnits.forEach(unit => {
+                unit.currentHp -= BALANCE.special.unitDamage;
+                addDamageNumber(unit.x, unit.y - 30, BALANCE.special.unitDamage, '#FF6600');
+            });
+
+            game.playerBase.hp -= BALANCE.special.baseDamage;
+            addDamageNumber(game.playerBase.x, 180, BALANCE.special.baseDamage, '#FF6600');
+
+            game.effects.push({ type: 'special', x: canvas.width / 2, y: 200, timer: 40 });
+
+            updateUI2();
+            return true;
+        }
+
         // ==================== ПОМОЩНИКИ ====================
         function showFloatingText(x, y, text, color) {
             game.damageNumbers.push({
@@ -860,6 +1231,12 @@
             // Доход
             game.gold += game.income * (dt / 1000);
 
+            // Доход и кулдауны игрока 2 (мультиплеер)
+            if (gameMode === 'multi') {
+                game.p2.gold += game.p2.income * (dt / 1000);
+                if (game.p2.specialCooldown > 0) game.p2.specialCooldown = Math.max(0, game.p2.specialCooldown - dt);
+            }
+
             // Кулдауны
             if (game.specialCooldown > 0) game.specialCooldown = Math.max(0, game.specialCooldown - dt);
             if (game.comboTimer > 0) {
@@ -873,11 +1250,15 @@
             // Тряска экрана
             if (screenShake > 0) screenShake = Math.max(0, screenShake - 1);
 
-            // Волны
-            updateWaves(dt);
+            // Волны (только в одиночном режиме)
+            if (gameMode === 'single') {
+                updateWaves(dt);
+            }
 
-            // ИИ
-            updateEnemyAI(dt);
+            // ИИ (только в одиночном режиме)
+            if (gameMode === 'single') {
+                updateEnemyAI(dt);
+            }
 
             // Юниты
             updateUnits(game.playerUnits, game.enemyUnits, game.enemyBase, false, dt);
@@ -889,6 +1270,15 @@
                     unit.currentHp = Math.min(unit.maxHp, unit.currentHp + unit.regenRate * (dt / 1000));
                 }
             });
+
+            // Регенерация юнитов игрока 2 (мультиплеер)
+            if (gameMode === 'multi') {
+                game.enemyUnits.forEach(unit => {
+                    if (unit.regenRate > 0 && unit.currentHp < unit.maxHp) {
+                        unit.currentHp = Math.min(unit.maxHp, unit.currentHp + unit.regenRate * (dt / 1000));
+                    }
+                });
+            }
 
             // Смерти
             const deadEnemies = game.enemyUnits.filter(u => u.currentHp <= 0);
@@ -914,6 +1304,25 @@
                     game.gold += 100;
                 }
             });
+
+            // Смерти юнитов игрока 1 (XP для игрока 2)
+            if (gameMode === 'multi') {
+                const deadPlayerUnits = game.playerUnits.filter(u => u.currentHp <= 0);
+                deadPlayerUnits.forEach(u => {
+                    game.p2.xp += BALANCE.xp.perKill;
+                    game.p2.gold += Math.floor(u.cost * 0.3);
+                    game.p2.kills++;
+
+                    game.effects.push({
+                        type: 'death',
+                        x: u.x,
+                        y: u.y,
+                        timer: 15,
+                        color: u.color,
+                        size: u.size
+                    });
+                });
+            }
 
             game.playerUnits = game.playerUnits.filter(u => u.currentHp > 0);
             game.enemyUnits = game.enemyUnits.filter(u => u.currentHp > 0);
@@ -946,6 +1355,10 @@
             if (Math.random() < 0.2) {
                 updateUI();
                 if (cachedButtons.era !== undefined) updateButtonStates(Math.floor(game.gold));
+                if (gameMode === 'multi') {
+                    updateUI2();
+                    if (cachedButtons2.era !== undefined) updateButtonStates2(Math.floor(game.p2.gold));
+                }
             }
         }
 
@@ -1111,7 +1524,17 @@
                 const inRange = game.playerUnits.filter(u => u.x > game.enemyBase.x - tb.range && u.currentHp > 0);
                 if (inRange.length > 0) {
                     const target = inRange.reduce((a, b) => a.x > b.x ? a : b);
-                    const damage = tb.baseDamage + game.enemyEra * (tb.damagePerLevel * 0.8);
+
+                    // В мультиплеере используем уровень турели игрока 2
+                    let damage, cooldown;
+                    if (gameMode === 'multi') {
+                        damage = tb.baseDamage + (game.p2.turretLevel - 1) * tb.damagePerLevel + game.p2.era * tb.damagePerEra;
+                        cooldown = Math.max(tb.minCooldown, tb.baseCooldown - (game.p2.turretLevel - 1) * tb.cooldownReduction);
+                        game.p2.xp += damage * 0.05;
+                    } else {
+                        damage = tb.baseDamage + game.enemyEra * (tb.damagePerLevel * 0.8);
+                        cooldown = tb.baseCooldown - game.enemyEra * 100;
+                    }
 
                     target.currentHp -= damage;
                     game.projectiles.push({
@@ -1120,7 +1543,7 @@
                         color: '#FF4444', speed: 12
                     });
 
-                    game.enemyBase.turretCooldown = tb.baseCooldown - game.enemyEra * 100;
+                    game.enemyBase.turretCooldown = cooldown;
                 }
             }
         }
@@ -1316,6 +1739,168 @@
                 cachedButtons.specialBtn.innerHTML = game.specialCooldown > 0 ?
                     `Удар (${cooldownSec}с)<br><span class="hotkey">Space</span>` :
                     `Удар!<br>${BALANCE.special.cost}g <span class="hotkey">Space</span>`;
+            }
+        }
+
+        // ==================== UI ИГРОКА 2 ====================
+        function updateUI2() {
+            if (gameMode !== 'multi') return;
+
+            document.getElementById('gold2').textContent = Math.floor(game.p2.gold);
+            document.getElementById('income2').textContent = game.p2.income;
+            document.getElementById('eraDisplay2').textContent = ERAS[game.p2.era].name;
+
+            // XP бар
+            const currentXp = game.p2.xp;
+            const nextEra = game.p2.era < 4 ? ERAS[game.p2.era + 1] : null;
+            const prevXp = ERAS[game.p2.era].xpRequired;
+            const nextXp = nextEra ? nextEra.xpRequired : currentXp;
+            const xpPercent = nextEra ? Math.min(100, ((currentXp - prevXp) / (nextXp - prevXp)) * 100) : 100;
+
+            document.getElementById('xpFill2').style.width = `${xpPercent}%`;
+            document.getElementById('xpText2').textContent = nextEra ?
+                `${Math.floor(currentXp)} / ${nextXp}` : 'MAX';
+        }
+
+        function renderControls2() {
+            if (gameMode !== 'multi') return;
+
+            const controls = document.getElementById('controls2');
+            const currentGold = Math.floor(game.p2.gold);
+            const needFullRender = !cachedButtons2.era || cachedButtons2.era !== game.p2.era;
+
+            if (needFullRender) {
+                controls.innerHTML = '';
+                cachedButtons2 = { era: game.p2.era, unitBtns: [], upgradeBtns: {} };
+
+                // Юниты
+                ERAS[game.p2.era].units.forEach((unit, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn unit-btn';
+                    btn.dataset.cost = unit.cost;
+                    btn.innerHTML = `${unit.name}<br>${unit.cost}g <span class="hotkey">${i + 7}</span>`;
+                    btn.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0) return;
+                        e.preventDefault();
+                        if (!btn.disabled && spawnUnit(i, true)) {
+                            btn.classList.add('clicked');
+                            setTimeout(() => btn.classList.remove('clicked'), 150);
+                        }
+                    });
+                    cachedButtons2.unitBtns.push(btn);
+                    controls.appendChild(btn);
+                });
+
+                // Эволюция
+                if (game.p2.era < 4) {
+                    const evolveBtn = document.createElement('button');
+                    evolveBtn.className = 'btn evolve-btn';
+                    evolveBtn.innerHTML = `Эволюция<br>${ERAS[game.p2.era + 1].name} <span class="hotkey">U</span>`;
+                    evolveBtn.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0 || evolveBtn.disabled) return;
+                        e.preventDefault();
+                        evolve2();
+                    });
+                    cachedButtons2.evolveBtn = evolveBtn;
+                    controls.appendChild(evolveBtn);
+                }
+
+                // Разделитель
+                controls.appendChild(Object.assign(document.createElement('div'), { className: 'separator' }));
+
+                // Улучшения базы
+                [
+                    { type: 'turret', name: 'Турель', hotkey: 'I', getLevel: () => game.p2.turretLevel, max: BALANCE.maxUpgradeLevel },
+                    { type: 'income', name: 'Доход', hotkey: 'O', getLevel: () => game.p2.incomeLevel, max: BALANCE.maxUpgradeLevel },
+                    { type: 'baseHp', name: 'HP базы', hotkey: 'P', getLevel: () => game.p2.baseHpLevel, max: BALANCE.maxUpgradeLevel }
+                ].forEach(upg => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn upgrade-btn';
+                    btn.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0 || btn.disabled) return;
+                        e.preventDefault();
+                        upgrade2(upg.type);
+                    });
+                    cachedButtons2.upgradeBtns[upg.type] = { btn, ...upg };
+                    controls.appendChild(btn);
+                });
+
+                // Разделитель
+                controls.appendChild(Object.assign(document.createElement('div'), { className: 'separator' }));
+
+                // Улучшения юнитов
+                [
+                    { type: 'attack', name: 'Атака', hotkey: 'J', getLevel: () => game.p2.unitAttackLevel, max: BALANCE.maxUnitUpgradeLevel, color: '#FF6666' },
+                    { type: 'health', name: 'HP', hotkey: 'K', getLevel: () => game.p2.unitHealthLevel, max: BALANCE.maxUnitUpgradeLevel, color: '#66FF66' },
+                    { type: 'regen', name: 'Реген', hotkey: 'L', getLevel: () => game.p2.unitRegenLevel, max: BALANCE.maxUnitUpgradeLevel, color: '#66FFFF' }
+                ].forEach(upg => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn unit-upgrade-btn';
+                    btn.style.background = `linear-gradient(135deg, ${upg.color}88 0%, ${upg.color}44 100%)`;
+                    btn.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0 || btn.disabled) return;
+                        e.preventDefault();
+                        upgrade2(upg.type);
+                    });
+                    cachedButtons2.upgradeBtns[upg.type] = { btn, ...upg };
+                    controls.appendChild(btn);
+                });
+
+                // Разделитель
+                controls.appendChild(Object.assign(document.createElement('div'), { className: 'separator' }));
+
+                // Спецспособность
+                const specialBtn = document.createElement('button');
+                specialBtn.className = 'btn special-btn';
+                specialBtn.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0 || specialBtn.disabled) return;
+                    e.preventDefault();
+                    useSpecial2();
+                });
+                cachedButtons2.specialBtn = specialBtn;
+                controls.appendChild(specialBtn);
+            }
+
+            updateButtonStates2(currentGold);
+        }
+
+        function updateButtonStates2(currentGold) {
+            if (!cachedButtons2.unitBtns) return;
+
+            cachedButtons2.unitBtns.forEach(btn => {
+                const cost = parseInt(btn.dataset.cost);
+                btn.disabled = currentGold < cost;
+                btn.classList.toggle('affordable', currentGold >= cost);
+            });
+
+            if (cachedButtons2.evolveBtn) {
+                const canEvolve = game.p2.xp >= ERAS[game.p2.era + 1].xpRequired;
+                cachedButtons2.evolveBtn.disabled = !canEvolve;
+                cachedButtons2.evolveBtn.classList.toggle('affordable', canEvolve);
+            }
+
+            Object.values(cachedButtons2.upgradeBtns).forEach(upg => {
+                const level = upg.getLevel();
+                const isMaxed = level >= upg.max;
+                const cost = getUpgradeCost2(upg.type);
+                const canAfford = currentGold >= cost;
+
+                upg.btn.classList.toggle('maxed', isMaxed);
+                upg.btn.classList.toggle('affordable', canAfford && !isMaxed);
+                upg.btn.disabled = isMaxed || !canAfford;
+                upg.btn.innerHTML = isMaxed ?
+                    `${upg.name} MAX<br><span class="hotkey">${upg.hotkey}</span>` :
+                    `${upg.name} ${level}<br>${cost}g <span class="hotkey">${upg.hotkey}</span>`;
+            });
+
+            if (cachedButtons2.specialBtn) {
+                const cooldownSec = Math.ceil(game.p2.specialCooldown / 1000);
+                const canUse = currentGold >= BALANCE.special.cost && game.p2.specialCooldown <= 0;
+                cachedButtons2.specialBtn.disabled = !canUse;
+                cachedButtons2.specialBtn.classList.toggle('affordable', canUse);
+                cachedButtons2.specialBtn.innerHTML = game.p2.specialCooldown > 0 ?
+                    `Удар (${cooldownSec}с)<br><span class="hotkey">Enter</span>` :
+                    `Удар!<br>${BALANCE.special.cost}g <span class="hotkey">Enter</span>`;
             }
         }
 
@@ -1949,17 +2534,30 @@
             const overlay = document.getElementById('gameOver');
             overlay.style.display = 'flex';
             overlay.className = victory ? 'victory' : 'defeat';
-            overlay.querySelector('h2').textContent = victory ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ';
+
+            if (gameMode === 'multi') {
+                overlay.querySelector('h2').textContent = victory ? 'ИГРОК 1 ПОБЕДИЛ!' : 'ИГРОК 2 ПОБЕДИЛ!';
+            } else {
+                overlay.querySelector('h2').textContent = victory ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ';
+            }
 
             const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
             const mins = Math.floor(elapsed / 60);
             const secs = elapsed % 60;
 
-            overlay.querySelector('.stats').innerHTML = `
-                Волн пройдено: ${game.wave - 1}<br>
-                Убийств: ${game.kills} | Макс комбо: ${game.maxCombo}<br>
-                Время: ${mins}:${secs.toString().padStart(2, '0')}
-            `;
+            if (gameMode === 'multi') {
+                overlay.querySelector('.stats').innerHTML = `
+                    Игрок 1: ${game.kills} убийств | Эра: ${ERAS[game.era].name}<br>
+                    Игрок 2: ${game.p2.kills} убийств | Эра: ${ERAS[game.p2.era].name}<br>
+                    Время: ${mins}:${secs.toString().padStart(2, '0')}
+                `;
+            } else {
+                overlay.querySelector('.stats').innerHTML = `
+                    Волн пройдено: ${game.wave - 1}<br>
+                    Убийств: ${game.kills} | Макс комбо: ${game.maxCombo}<br>
+                    Время: ${mins}:${secs.toString().padStart(2, '0')}
+                `;
+            }
         }
 
         // ==================== УПРАВЛЕНИЕ ====================
@@ -1976,6 +2574,7 @@
 
             if (game.paused) return;
 
+            // Игрок 1
             const actions = {
                 '1': () => spawnUnit(0),
                 '2': () => spawnUnit(1),
@@ -1990,14 +2589,33 @@
                 ' ': () => { e.preventDefault(); useSpecial(); }
             };
 
+            // Игрок 2 (только в мультиплеере)
+            if (gameMode === 'multi') {
+                const actions2 = {
+                    '7': () => spawnUnit(0, true),
+                    '8': () => spawnUnit(1, true),
+                    '9': () => spawnUnit(2, true),
+                    'u': evolve2,
+                    'i': () => upgrade2('turret'),
+                    'o': () => upgrade2('income'),
+                    'p': () => upgrade2('baseHp'),
+                    'j': () => upgrade2('attack'),
+                    'k': () => upgrade2('health'),
+                    'l': () => upgrade2('regen'),
+                    'enter': () => { e.preventDefault(); useSpecial2(); }
+                };
+                if (actions2[key]) actions2[key]();
+            }
+
             if (actions[key]) actions[key]();
         });
 
-        document.getElementById('restartBtn').addEventListener('click', initGame);
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            showMenu();
+        });
 
         // ==================== СТАРТ ====================
-        initGame();
-        requestAnimationFrame(gameLoop);
+        // Игра начинается после выбора режима в меню
     </script>
 </body>
 </html>
