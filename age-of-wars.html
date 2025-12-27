@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age of Wars Evolution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #gameContainer {
+            position: relative;
+            border: 3px solid #ffd700;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        #gameCanvas {
+            display: block;
+        }
+
+        #ui {
+            width: 1000px;
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        #topBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 8px;
+        }
+
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .resource span { color: #ffd700; }
+
+        #waveInfo {
+            text-align: center;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #waveInfo.boss {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        #eraDisplay {
+            text-align: center;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #comboDisplay {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        #comboDisplay.active {
+            opacity: 1;
+            animation: comboPulse 0.3s ease-out;
+        }
+
+        @keyframes comboPulse {
+            0% { transform: translateX(-50%) scale(1.5); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        #controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+            color: #fff;
+            min-width: 100px;
+            user-select: none;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(1px) scale(0.95);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn.clicked {
+            animation: btnClick 0.15s ease-out;
+        }
+
+        @keyframes btnClick {
+            50% { transform: scale(0.9); }
+        }
+
+        .btn.affordable {
+            box-shadow: 0 0 10px rgba(56, 239, 125, 0.5);
+        }
+
+        .unit-btn { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .upgrade-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .evolve-btn { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
+        .special-btn { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); }
+        .unit-upgrade-btn { min-width: 90px; }
+
+        .speed-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            min-width: 60px;
+        }
+        .speed-btn.active {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+
+        #healthBars {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .health-container { width: 45%; }
+
+        .health-label {
+            font-size: 12px;
+            margin-bottom: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .health-bar {
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .health-fill {
+            height: 100%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+
+        .player-health { background: linear-gradient(90deg, #00b09b, #96c93d); }
+        .enemy-health { background: linear-gradient(90deg, #cb2d3e, #ef473a); }
+
+        .health-bar.danger .player-health {
+            animation: dangerPulse 0.5s infinite alternate;
+        }
+
+        @keyframes dangerPulse {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.5); }
+        }
+
+        .health-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 11px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        #xpBar { margin-bottom: 8px; }
+
+        .xp-container {
+            height: 12px;
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+
+        #statsBar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        #statsBar span { color: #ffd700; }
+
+        #gameOver {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        #gameOver h2 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        #gameOver .stats {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #aaa;
+        }
+
+        #gameOver.victory h2 { color: #38ef7d; }
+        #gameOver.defeat h2 { color: #ef473a; }
+
+        #restartBtn {
+            padding: 15px 40px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .hotkey {
+            display: inline-block;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-left: 3px;
+        }
+
+        .separator {
+            width: 2px;
+            background: #444;
+            margin: 0 5px;
+            align-self: stretch;
+        }
+
+        .maxed { background: linear-gradient(135deg, #434343 0%, #000000 100%) !important; }
+
+        #pauseOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            font-size: 48px;
+            color: #fff;
+        }
+
+        .shake {
+            animation: shake 0.3s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Age of Wars Evolution</h1>
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1000" height="400"></canvas>
+        <div id="comboDisplay">COMBO x5!</div>
+        <div id="pauseOverlay">ПАУЗА</div>
+        <div id="gameOver">
+            <h2></h2>
+            <div class="stats"></div>
+            <button id="restartBtn">Играть снова</button>
+        </div>
+    </div>
+
+    <div id="ui">
+        <div id="healthBars">
+            <div class="health-container">
+                <div class="health-label">
+                    <span>Ваша база</span>
+                    <span id="playerHpNum"></span>
+                </div>
+                <div class="health-bar" id="playerHealthBarContainer">
+                    <div class="health-fill player-health" id="playerHealthBar"></div>
+                </div>
+            </div>
+            <div class="health-container">
+                <div class="health-label">
+                    <span>База врага</span>
+                    <span id="enemyHpNum"></span>
+                </div>
+                <div class="health-bar">
+                    <div class="health-fill enemy-health" id="enemyHealthBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="statsBar">
+            Убийств: <span id="killCount">0</span> |
+            Урон: <span id="damageDealt">0</span> |
+            Время: <span id="gameTime">0:00</span>
+        </div>
+
+        <div id="xpBar">
+            <div class="health-label">
+                <span>Опыт</span>
+                <span id="xpText">0 / 100</span>
+            </div>
+            <div class="xp-container">
+                <div class="xp-fill" id="xpFill"></div>
+            </div>
+        </div>
+
+        <div id="topBar">
+            <div class="resource">Золото: <span id="gold">100</span></div>
+            <div id="waveInfo">Волна 1</div>
+            <div id="eraDisplay">Каменный век</div>
+            <div class="resource">+<span id="income">8</span>/с</div>
+        </div>
+
+        <div id="controls"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ==================== БАЛАНС ====================
+        const BALANCE = {
+            startGold: 50,
+            baseIncome: 8,
+            incomePerLevel: 4,
+            baseHp: 1500,
+            baseHpPerUpgrade: 300,
+
+            turret: {
+                baseCooldown: 1800,
+                cooldownReduction: 150,
+                minCooldown: 800,
+                baseDamage: 15,
+                damagePerLevel: 10,
+                damagePerEra: 6,
+                range: 350,
+                maxLevel: 5
+            },
+
+            upgrades: {
+                turret: { baseCost: 100, costMultiplier: 2.2 },
+                income: { baseCost: 120, costMultiplier: 2.5 },
+                baseHp: { baseCost: 150, costMultiplier: 2.3 }
+            },
+            maxUpgradeLevel: 5,
+
+            unitUpgrades: {
+                attack: { baseCost: 80, costMultiplier: 2.0, bonusPerLevel: 0.15 },
+                health: { baseCost: 80, costMultiplier: 2.0, bonusPerLevel: 0.15 },
+                regen: { baseCost: 100, costMultiplier: 2.2, regenPerLevel: 2 }
+            },
+            maxUnitUpgradeLevel: 5,
+
+            special: {
+                cost: 250,
+                cooldown: 45000,
+                unitDamage: 100,
+                baseDamage: 50
+            },
+
+            // Волны
+            waves: {
+                timeBetweenWaves: 25000,  // 25 секунд между волнами
+                bossEveryNWaves: 5,
+                difficultyScale: 1.15     // Сложность +15% за волну
+            },
+
+            // Комбо
+            combo: {
+                timeWindow: 2000,         // 2 секунды для комбо
+                goldBonusPerKill: 5       // +5 золота за каждое убийство в комбо
+            },
+
+            ai: {
+                baseIncome: 7,
+                incomePerEra: 2,
+                minSpawnDelay: 2500,
+                maxSpawnDelay: 4500,
+                evolutionTimes: [0, 75000, 180000, 330000, 510000],
+                smartSpawnChance: 0.3
+            },
+
+            xp: {
+                perDamageToUnit: 0.15,
+                perDamageToBase: 0.25,
+                perKill: 5
+            }
+        };
+
+        // ==================== ЭРЫ ====================
+        const ERAS = [
+            {
+                name: 'Каменный век',
+                units: [
+                    { name: 'Дубинщик', cost: 20, hp: 60, damage: 10, speed: 1.8, range: 30, attackSpeed: 800, color: '#8B4513', size: 20 },
+                    { name: 'Копейщик', cost: 40, hp: 90, damage: 15, speed: 1.3, range: 45, attackSpeed: 1000, color: '#A0522D', size: 22 },
+                    { name: 'Камнемёт', cost: 55, hp: 45, damage: 22, speed: 1.0, range: 120, attackSpeed: 1400, color: '#6B4423', size: 18 }
+                ],
+                xpRequired: 0
+            },
+            {
+                name: 'Средневековье',
+                units: [
+                    { name: 'Мечник', cost: 30, hp: 100, damage: 18, speed: 1.6, range: 35, attackSpeed: 850, color: '#4169E1', size: 22 },
+                    { name: 'Рыцарь', cost: 75, hp: 200, damage: 28, speed: 1.1, range: 40, attackSpeed: 1200, color: '#C0C0C0', size: 28 },
+                    { name: 'Лучник', cost: 50, hp: 55, damage: 24, speed: 1.3, range: 160, attackSpeed: 1300, color: '#228B22', size: 20 }
+                ],
+                xpRequired: 120
+            },
+            {
+                name: 'Эпоха пороха',
+                units: [
+                    { name: 'Мушкетёр', cost: 45, hp: 80, damage: 32, speed: 1.4, range: 180, attackSpeed: 1500, color: '#8B0000', size: 22 },
+                    { name: 'Кавалерия', cost: 90, hp: 160, damage: 38, speed: 2.0, range: 40, attackSpeed: 1000, color: '#DAA520', size: 30 },
+                    { name: 'Канонир', cost: 120, hp: 100, damage: 55, speed: 0.7, range: 200, attackSpeed: 2200, color: '#2F4F4F', size: 25 }
+                ],
+                xpRequired: 350
+            },
+            {
+                name: 'Современность',
+                units: [
+                    { name: 'Солдат', cost: 55, hp: 100, damage: 42, speed: 1.7, range: 200, attackSpeed: 1100, color: '#556B2F', size: 22 },
+                    { name: 'Танк', cost: 180, hp: 400, damage: 65, speed: 0.8, range: 150, attackSpeed: 1800, color: '#3D5C3D', size: 40 },
+                    { name: 'Снайпер', cost: 100, hp: 60, damage: 90, speed: 1.0, range: 280, attackSpeed: 2000, color: '#708090', size: 20 }
+                ],
+                xpRequired: 700
+            },
+            {
+                name: 'Будущее',
+                units: [
+                    { name: 'Киборг', cost: 80, hp: 150, damage: 55, speed: 1.9, range: 200, attackSpeed: 900, color: '#00CED1', size: 24 },
+                    { name: 'Мех', cost: 250, hp: 550, damage: 85, speed: 0.9, range: 180, attackSpeed: 1600, color: '#9400D3', size: 45 },
+                    { name: 'Дрон', cost: 130, hp: 75, damage: 110, speed: 2.2, range: 250, attackSpeed: 1700, color: '#FF4500', size: 18 }
+                ],
+                xpRequired: 1200
+            }
+        ];
+
+        // ==================== ИГРА ====================
+        let game = {};
+        let gameStartTime = 0;
+        let cachedButtons = {};
+        let isProcessingClick = false;
+        let lastTime = 0;
+        let screenShake = 0;
+        let gameSpeed = 1;
+
+        function initGame() {
+            game = {
+                gold: BALANCE.startGold,
+                xp: 0,
+                era: 0,
+                income: BALANCE.baseIncome,
+
+                playerBase: { hp: BALANCE.baseHp, maxHp: BALANCE.baseHp, x: 50, turretCooldown: 0 },
+                enemyBase: { hp: BALANCE.baseHp, maxHp: BALANCE.baseHp, x: 950, turretCooldown: 0 },
+
+                playerUnits: [],
+                enemyUnits: [],
+                projectiles: [],
+                effects: [],
+                damageNumbers: [],
+
+                turretLevel: 1,
+                incomeLevel: 1,
+                baseHpLevel: 1,
+                unitAttackLevel: 1,
+                unitHealthLevel: 1,
+                unitRegenLevel: 0,
+
+                specialCooldown: 0,
+
+                enemyEra: 0,
+                enemyGold: BALANCE.startGold,
+                enemySpawnTimer: 3000,
+
+                // Волны
+                wave: 1,
+                waveTimer: BALANCE.waves.timeBetweenWaves,
+                isBossWave: false,
+                bossSpawned: false,
+
+                // Комбо
+                comboCount: 0,
+                comboTimer: 0,
+                maxCombo: 0,
+
+                // Статистика
+                kills: 0,
+                totalDamage: 0,
+
+                gameOver: false,
+                paused: false
+            };
+
+            gameStartTime = Date.now();
+            screenShake = 0;
+            cachedButtons = {};
+
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('pauseOverlay').style.display = 'none';
+            document.getElementById('comboDisplay').classList.remove('active');
+
+            updateUI();
+            renderControls();
+        }
+
+        // ==================== ЮНИТЫ ====================
+        function spawnUnit(unitType, isEnemy = false, isBoss = false) {
+            const era = isEnemy ? game.enemyEra : game.era;
+            const unitData = ERAS[era].units[unitType];
+
+            if (!unitData) return false;
+
+            if (!isEnemy) {
+                isProcessingClick = true;
+                if (game.gold < unitData.cost) {
+                    showFloatingText(150, 300, 'Мало золота!', '#FF6666');
+                    isProcessingClick = false;
+                    return false;
+                }
+                game.gold -= unitData.cost;
+            }
+
+            // Бонусы от улучшений
+            let bonusDamage = 1, bonusHp = 1, regenRate = 0;
+            if (!isEnemy) {
+                bonusDamage = 1 + (game.unitAttackLevel - 1) * BALANCE.unitUpgrades.attack.bonusPerLevel;
+                bonusHp = 1 + (game.unitHealthLevel - 1) * BALANCE.unitUpgrades.health.bonusPerLevel;
+                regenRate = game.unitRegenLevel * BALANCE.unitUpgrades.regen.regenPerLevel;
+            }
+
+            // Босс-множители
+            const bossMultiplier = isBoss ? 3 : 1;
+            const bossSize = isBoss ? 1.8 : 1;
+
+            const finalHp = Math.floor(unitData.hp * bonusHp * bossMultiplier);
+            const finalDamage = Math.floor(unitData.damage * bonusDamage * bossMultiplier);
+
+            const unit = {
+                ...unitData,
+                hp: finalHp,
+                maxHp: finalHp,
+                currentHp: finalHp,
+                damage: finalDamage,
+                size: Math.floor(unitData.size * bossSize),
+                regenRate: regenRate,
+                x: isEnemy ? game.enemyBase.x - 70 : game.playerBase.x + 70,
+                y: 320,
+                isEnemy: isEnemy,
+                isBoss: isBoss,
+                attackCooldown: 0,
+                era: era
+            };
+
+            if (isEnemy) {
+                game.enemyUnits.push(unit);
+            } else {
+                game.playerUnits.push(unit);
+                game.effects.push({ type: 'spawn', x: unit.x, y: unit.y - 20, timer: 20 });
+            }
+
+            updateUI();
+            if (!isEnemy) {
+                setTimeout(() => {
+                    isProcessingClick = false;
+                    updateButtonStates(Math.floor(game.gold));
+                }, 10);
+            }
+            return true;
+        }
+
+        // ==================== ЭВОЛЮЦИЯ ====================
+        function evolve() {
+            if (game.era >= 4) return;
+            const nextEra = ERAS[game.era + 1];
+            if (game.xp >= nextEra.xpRequired) {
+                game.era++;
+                screenShake = 20;
+
+                game.effects.push({
+                    type: 'evolve',
+                    x: canvas.width / 2,
+                    y: 150,
+                    timer: 120,
+                    text: ERAS[game.era].name
+                });
+
+                // Бонус золота за эволюцию
+                game.gold += 50;
+                showFloatingText(150, 250, '+50 бонус!', '#FFD700');
+
+                updateUI();
+                cachedButtons = {};
+                renderControls();
+            }
+        }
+
+        // ==================== УЛУЧШЕНИЯ ====================
+        function getUpgradeCost(type) {
+            if (BALANCE.upgrades[type]) {
+                const level = type === 'turret' ? game.turretLevel :
+                             type === 'income' ? game.incomeLevel : game.baseHpLevel;
+                return Math.floor(BALANCE.upgrades[type].baseCost * Math.pow(BALANCE.upgrades[type].costMultiplier, level - 1));
+            }
+            if (BALANCE.unitUpgrades[type]) {
+                const level = type === 'attack' ? game.unitAttackLevel :
+                             type === 'health' ? game.unitHealthLevel : game.unitRegenLevel;
+                return Math.floor(BALANCE.unitUpgrades[type].baseCost * Math.pow(BALANCE.unitUpgrades[type].costMultiplier, level));
+            }
+            return 0;
+        }
+
+        function upgrade(type) {
+            isProcessingClick = true;
+            const cost = getUpgradeCost(type);
+            let success = false;
+
+            if (game.gold < cost) {
+                showFloatingText(150, 300, 'Мало золота!', '#FF6666');
+            } else {
+                switch(type) {
+                    case 'turret':
+                        if (game.turretLevel < BALANCE.maxUpgradeLevel) {
+                            game.gold -= cost; game.turretLevel++; success = true;
+                        }
+                        break;
+                    case 'income':
+                        if (game.incomeLevel < BALANCE.maxUpgradeLevel) {
+                            game.gold -= cost; game.incomeLevel++;
+                            game.income = BALANCE.baseIncome + (game.incomeLevel - 1) * BALANCE.incomePerLevel;
+                            success = true;
+                        }
+                        break;
+                    case 'baseHp':
+                        if (game.baseHpLevel < BALANCE.maxUpgradeLevel) {
+                            game.gold -= cost; game.baseHpLevel++;
+                            game.playerBase.maxHp += BALANCE.baseHpPerUpgrade;
+                            game.playerBase.hp += BALANCE.baseHpPerUpgrade;
+                            success = true;
+                        }
+                        break;
+                    case 'attack':
+                        if (game.unitAttackLevel < BALANCE.maxUnitUpgradeLevel) {
+                            game.gold -= cost; game.unitAttackLevel++; success = true;
+                            showFloatingText(150, 250, `Атака +15%!`, '#FF6666');
+                        }
+                        break;
+                    case 'health':
+                        if (game.unitHealthLevel < BALANCE.maxUnitUpgradeLevel) {
+                            game.gold -= cost; game.unitHealthLevel++; success = true;
+                            showFloatingText(150, 250, `Здоровье +15%!`, '#66FF66');
+                        }
+                        break;
+                    case 'regen':
+                        if (game.unitRegenLevel < BALANCE.maxUnitUpgradeLevel) {
+                            game.gold -= cost; game.unitRegenLevel++; success = true;
+                            showFloatingText(150, 250, `Реген +2 HP/с!`, '#66FFFF');
+                        }
+                        break;
+                }
+            }
+
+            updateUI();
+            setTimeout(() => {
+                isProcessingClick = false;
+                updateButtonStates(Math.floor(game.gold));
+            }, 10);
+            return success;
+        }
+
+        // ==================== СПЕЦСПОСОБНОСТЬ ====================
+        function useSpecial() {
+            isProcessingClick = true;
+
+            if (game.gold < BALANCE.special.cost) {
+                showFloatingText(150, 300, 'Мало золота!', '#FF6666');
+                isProcessingClick = false;
+                return false;
+            }
+            if (game.specialCooldown > 0) {
+                showFloatingText(150, 300, 'Перезарядка!', '#FFAA00');
+                isProcessingClick = false;
+                return false;
+            }
+
+            game.gold -= BALANCE.special.cost;
+            game.specialCooldown = BALANCE.special.cooldown;
+            screenShake = 30;
+
+            game.enemyUnits.forEach(unit => {
+                unit.currentHp -= BALANCE.special.unitDamage;
+                addDamageNumber(unit.x, unit.y - 30, BALANCE.special.unitDamage, '#FF6600');
+                game.totalDamage += BALANCE.special.unitDamage;
+            });
+
+            game.enemyBase.hp -= BALANCE.special.baseDamage;
+            addDamageNumber(game.enemyBase.x, 180, BALANCE.special.baseDamage, '#FF6600');
+            game.totalDamage += BALANCE.special.baseDamage;
+
+            game.effects.push({ type: 'special', x: canvas.width / 2, y: 200, timer: 40 });
+
+            updateUI();
+            setTimeout(() => {
+                isProcessingClick = false;
+                updateButtonStates(Math.floor(game.gold));
+            }, 10);
+            return true;
+        }
+
+        // ==================== ПОМОЩНИКИ ====================
+        function showFloatingText(x, y, text, color) {
+            game.damageNumbers.push({
+                x: x + (Math.random() - 0.5) * 30,
+                y: y,
+                damage: text,
+                color: color,
+                timer: 60,
+                vy: -1.5,
+                isText: true
+            });
+        }
+
+        function addDamageNumber(x, y, damage, color = '#FFFF00') {
+            game.damageNumbers.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y,
+                damage: Math.floor(damage),
+                color: color,
+                timer: 45,
+                vy: -2
+            });
+        }
+
+        // ==================== КОМБО ====================
+        function addCombo() {
+            game.comboCount++;
+            game.comboTimer = BALANCE.combo.timeWindow;
+
+            if (game.comboCount > game.maxCombo) game.maxCombo = game.comboCount;
+
+            if (game.comboCount >= 3) {
+                const bonus = game.comboCount * BALANCE.combo.goldBonusPerKill;
+                game.gold += bonus;
+
+                const comboDisplay = document.getElementById('comboDisplay');
+                comboDisplay.textContent = `COMBO x${game.comboCount}! +${bonus}g`;
+                comboDisplay.classList.remove('active');
+                void comboDisplay.offsetWidth;
+                comboDisplay.classList.add('active');
+            }
+        }
+
+        // ==================== ИГРОВОЙ ЦИКЛ ====================
+        function gameLoop(timestamp) {
+            const rawDelta = Math.min(timestamp - lastTime, 50);
+            const deltaTime = rawDelta * gameSpeed;
+            lastTime = timestamp;
+
+            if (!game.gameOver && !game.paused) {
+                update(deltaTime);
+                render();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update(dt) {
+            // Доход
+            game.gold += game.income * (dt / 1000);
+
+            // Кулдауны
+            if (game.specialCooldown > 0) game.specialCooldown = Math.max(0, game.specialCooldown - dt);
+            if (game.comboTimer > 0) {
+                game.comboTimer -= dt;
+                if (game.comboTimer <= 0) {
+                    game.comboCount = 0;
+                    document.getElementById('comboDisplay').classList.remove('active');
+                }
+            }
+
+            // Тряска экрана
+            if (screenShake > 0) screenShake = Math.max(0, screenShake - 1);
+
+            // Волны
+            updateWaves(dt);
+
+            // ИИ
+            updateEnemyAI(dt);
+
+            // Юниты
+            updateUnits(game.playerUnits, game.enemyUnits, game.enemyBase, false, dt);
+            updateUnits(game.enemyUnits, game.playerUnits, game.playerBase, true, dt);
+
+            // Регенерация
+            game.playerUnits.forEach(unit => {
+                if (unit.regenRate > 0 && unit.currentHp < unit.maxHp) {
+                    unit.currentHp = Math.min(unit.maxHp, unit.currentHp + unit.regenRate * (dt / 1000));
+                }
+            });
+
+            // Смерти
+            const deadEnemies = game.enemyUnits.filter(u => u.currentHp <= 0);
+            deadEnemies.forEach(u => {
+                game.xp += BALANCE.xp.perKill * (u.isBoss ? 5 : 1);
+                game.gold += Math.floor(u.cost * 0.3) * (u.isBoss ? 3 : 1);
+                game.kills++;
+                addCombo();
+
+                // Эффект смерти
+                game.effects.push({
+                    type: 'death',
+                    x: u.x,
+                    y: u.y,
+                    timer: 15,
+                    color: u.color,
+                    size: u.size
+                });
+
+                if (u.isBoss) {
+                    screenShake = 25;
+                    showFloatingText(u.x, u.y - 50, 'БОСС УБИТ!', '#FFD700');
+                    game.gold += 100;
+                }
+            });
+
+            game.playerUnits = game.playerUnits.filter(u => u.currentHp > 0);
+            game.enemyUnits = game.enemyUnits.filter(u => u.currentHp > 0);
+
+            // Снаряды
+            game.projectiles = game.projectiles.filter(p => {
+                const dx = p.targetX - p.x, dy = p.targetY - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 10) return false;
+                p.x += (dx / dist) * p.speed;
+                p.y += (dy / dist) * p.speed;
+                return true;
+            });
+
+            // Турели
+            updateTurrets(dt);
+
+            // Эффекты
+            game.effects = game.effects.filter(e => --e.timer > 0);
+            game.damageNumbers = game.damageNumbers.filter(d => {
+                d.y += d.vy;
+                return --d.timer > 0;
+            });
+
+            // Победа/Поражение
+            if (game.playerBase.hp <= 0) endGame(false);
+            else if (game.enemyBase.hp <= 0) endGame(true);
+
+            // UI
+            if (Math.random() < 0.2) {
+                updateUI();
+                if (cachedButtons.era !== undefined) updateButtonStates(Math.floor(game.gold));
+            }
+        }
+
+        // ==================== ВОЛНЫ ====================
+        function updateWaves(dt) {
+            game.waveTimer -= dt;
+
+            if (game.waveTimer <= 0) {
+                game.wave++;
+                game.waveTimer = BALANCE.waves.timeBetweenWaves;
+                game.isBossWave = (game.wave % BALANCE.waves.bossEveryNWaves === 0);
+                game.bossSpawned = false;
+
+                // Бонус золота за волну
+                const waveBonus = 20 + game.wave * 5;
+                game.gold += waveBonus;
+                showFloatingText(canvas.width / 2, 100, `Волна ${game.wave}! +${waveBonus}g`, '#FFD700');
+
+                if (game.isBossWave) {
+                    showFloatingText(canvas.width / 2, 130, 'БОСС ИДЁТ!', '#FF0000');
+                    screenShake = 30;
+                }
+
+                updateUI();
+            }
+
+            // Спавн босса
+            if (game.isBossWave && !game.bossSpawned && game.waveTimer < BALANCE.waves.timeBetweenWaves - 3000) {
+                const bossType = Math.min(2, Math.floor(Math.random() * 3));
+                spawnUnit(bossType, true, true);
+                game.bossSpawned = true;
+            }
+        }
+
+        // ==================== ИИ ====================
+        function updateEnemyAI(dt) {
+            const difficultyMult = Math.pow(BALANCE.waves.difficultyScale, game.wave - 1);
+            const aiIncome = (BALANCE.ai.baseIncome + game.enemyEra * BALANCE.ai.incomePerEra) * difficultyMult;
+            game.enemyGold += aiIncome * (dt / 1000);
+            game.enemySpawnTimer -= dt;
+
+            // Эволюция ИИ
+            if (game.enemyEra < 4) {
+                const gameTime = Date.now() - gameStartTime;
+                if (gameTime > BALANCE.ai.evolutionTimes[game.enemyEra + 1]) {
+                    game.enemyEra++;
+                    game.enemyBase.maxHp += BALANCE.baseHpPerUpgrade;
+                    game.enemyBase.hp = Math.min(game.enemyBase.hp + BALANCE.baseHpPerUpgrade, game.enemyBase.maxHp);
+                    game.effects.push({ type: 'enemyEvolve', x: game.enemyBase.x, y: 200, timer: 90, text: ERAS[game.enemyEra].name });
+                }
+            }
+
+            // Спавн
+            if (game.enemySpawnTimer <= 0) {
+                const units = ERAS[game.enemyEra].units;
+                const affordable = units.filter(u => u.cost <= game.enemyGold);
+
+                if (affordable.length > 0) {
+                    let choice;
+                    if (Math.random() < BALANCE.ai.smartSpawnChance) {
+                        choice = affordable.reduce((a, b) => a.cost > b.cost ? a : b);
+                    } else {
+                        choice = affordable[Math.floor(Math.random() * affordable.length)];
+                    }
+                    game.enemyGold -= choice.cost;
+                    spawnUnit(units.indexOf(choice), true);
+                }
+
+                const spawnDelay = BALANCE.ai.minSpawnDelay + Math.random() * (BALANCE.ai.maxSpawnDelay - BALANCE.ai.minSpawnDelay);
+                game.enemySpawnTimer = spawnDelay / difficultyMult;
+            }
+        }
+
+        // ==================== ЮНИТЫ ====================
+        function updateUnits(units, enemies, targetBase, isEnemy, dt) {
+            units.forEach(unit => {
+                let target = null, minDist = Infinity;
+
+                enemies.forEach(enemy => {
+                    if (enemy.currentHp > 0) {
+                        const dist = Math.abs(unit.x - enemy.x);
+                        if (dist < minDist) { minDist = dist; target = enemy; }
+                    }
+                });
+
+                const baseDistance = Math.abs(unit.x - targetBase.x);
+                unit.attackCooldown = Math.max(0, unit.attackCooldown - dt);
+
+                if (target && minDist <= unit.range) {
+                    if (unit.attackCooldown <= 0) {
+                        // Критический удар (10% шанс, x2 урон)
+                        const isCrit = Math.random() < 0.1;
+                        const damage = unit.damage * (isCrit ? 2 : 1);
+
+                        target.currentHp -= damage;
+                        unit.attackCooldown = unit.attackSpeed;
+
+                        if (unit.range > 60) {
+                            game.projectiles.push({
+                                x: unit.x, y: unit.y - 15,
+                                targetX: target.x, targetY: target.y - 15,
+                                color: isCrit ? '#FFD700' : unit.color,
+                                speed: 10
+                            });
+                        }
+
+                        if (!isEnemy) {
+                            game.xp += damage * BALANCE.xp.perDamageToUnit;
+                            game.totalDamage += damage;
+                            addDamageNumber(target.x, target.y - 20, damage, isCrit ? '#FFD700' : '#FFFF00');
+                            if (isCrit) showFloatingText(target.x, target.y - 40, 'КРИТ!', '#FFD700');
+                        }
+                    }
+                } else if (baseDistance <= unit.range + 30) {
+                    if (unit.attackCooldown <= 0) {
+                        targetBase.hp -= unit.damage;
+                        unit.attackCooldown = unit.attackSpeed;
+
+                        if (!isEnemy) {
+                            game.xp += unit.damage * BALANCE.xp.perDamageToBase;
+                            game.totalDamage += unit.damage;
+                            addDamageNumber(targetBase.x, 200, unit.damage, '#FF4444');
+                        } else {
+                            screenShake = Math.min(screenShake + 5, 15);
+                        }
+                    }
+                } else {
+                    unit.x += unit.speed * (isEnemy ? -1 : 1) * (dt / 16);
+                }
+            });
+        }
+
+        // ==================== ТУРЕЛИ ====================
+        function updateTurrets(dt) {
+            const tb = BALANCE.turret;
+
+            // Турель игрока
+            game.playerBase.turretCooldown = Math.max(0, game.playerBase.turretCooldown - dt);
+            if (game.enemyUnits.length > 0 && game.playerBase.turretCooldown <= 0) {
+                const inRange = game.enemyUnits.filter(u => u.x < game.playerBase.x + tb.range && u.currentHp > 0);
+                if (inRange.length > 0) {
+                    const target = inRange.reduce((a, b) => a.x < b.x ? a : b);
+                    const damage = tb.baseDamage + (game.turretLevel - 1) * tb.damagePerLevel + game.era * tb.damagePerEra;
+
+                    target.currentHp -= damage;
+                    game.xp += damage * 0.05;
+                    game.totalDamage += damage;
+                    addDamageNumber(target.x, target.y - 25, damage, '#FFD700');
+
+                    game.projectiles.push({
+                        x: game.playerBase.x + 35, y: 275,
+                        targetX: target.x, targetY: target.y - 10,
+                        color: '#FFD700', speed: 12
+                    });
+
+                    game.playerBase.turretCooldown = Math.max(tb.minCooldown, tb.baseCooldown - (game.turretLevel - 1) * tb.cooldownReduction);
+                }
+            }
+
+            // Турель врага
+            game.enemyBase.turretCooldown = Math.max(0, game.enemyBase.turretCooldown - dt);
+            if (game.playerUnits.length > 0 && game.enemyBase.turretCooldown <= 0) {
+                const inRange = game.playerUnits.filter(u => u.x > game.enemyBase.x - tb.range && u.currentHp > 0);
+                if (inRange.length > 0) {
+                    const target = inRange.reduce((a, b) => a.x > b.x ? a : b);
+                    const damage = tb.baseDamage + game.enemyEra * (tb.damagePerLevel * 0.8);
+
+                    target.currentHp -= damage;
+                    game.projectiles.push({
+                        x: game.enemyBase.x - 35, y: 275,
+                        targetX: target.x, targetY: target.y - 10,
+                        color: '#FF4444', speed: 12
+                    });
+
+                    game.enemyBase.turretCooldown = tb.baseCooldown - game.enemyEra * 100;
+                }
+            }
+        }
+
+        // ==================== UI ====================
+        function updateUI() {
+            document.getElementById('gold').textContent = Math.floor(game.gold);
+            document.getElementById('income').textContent = game.income;
+            document.getElementById('eraDisplay').textContent = ERAS[game.era].name;
+
+            // Волна
+            const waveInfo = document.getElementById('waveInfo');
+            waveInfo.textContent = `Волна ${game.wave}`;
+            waveInfo.classList.toggle('boss', game.isBossWave);
+
+            // XP
+            const nextEra = game.era < 4 ? ERAS[game.era + 1] : null;
+            const xpNeeded = nextEra ? nextEra.xpRequired : game.xp;
+            const prevXp = ERAS[game.era].xpRequired;
+            const xpProgress = nextEra ? ((game.xp - prevXp) / (xpNeeded - prevXp)) * 100 : 100;
+            document.getElementById('xpFill').style.width = Math.min(100, xpProgress) + '%';
+            document.getElementById('xpText').textContent = `${Math.floor(game.xp)} / ${xpNeeded}`;
+
+            // HP
+            const playerHp = Math.max(0, game.playerBase.hp);
+            const enemyHp = Math.max(0, game.enemyBase.hp);
+            document.getElementById('playerHealthBar').style.width = (playerHp / game.playerBase.maxHp * 100) + '%';
+            document.getElementById('enemyHealthBar').style.width = (enemyHp / game.enemyBase.maxHp * 100) + '%';
+            document.getElementById('playerHpNum').textContent = `${Math.floor(playerHp)}/${game.playerBase.maxHp}`;
+            document.getElementById('enemyHpNum').textContent = `${Math.floor(enemyHp)}/${game.enemyBase.maxHp}`;
+
+            // Опасность
+            const playerHpContainer = document.getElementById('playerHealthBarContainer');
+            playerHpContainer.classList.toggle('danger', playerHp < game.playerBase.maxHp * 0.25);
+
+            // Статистика
+            document.getElementById('killCount').textContent = game.kills;
+            document.getElementById('damageDealt').textContent = Math.floor(game.totalDamage);
+
+            const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            document.getElementById('gameTime').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function renderControls() {
+            const controls = document.getElementById('controls');
+            const currentGold = Math.floor(game.gold);
+            const needFullRender = !cachedButtons.era || cachedButtons.era !== game.era;
+
+            if (needFullRender) {
+                controls.innerHTML = '';
+                cachedButtons = { era: game.era, unitBtns: [], upgradeBtns: {} };
+
+                // Юниты
+                ERAS[game.era].units.forEach((unit, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn unit-btn';
+                    btn.dataset.cost = unit.cost;
+                    btn.innerHTML = `${unit.name}<br>${unit.cost}g <span class="hotkey">${i + 1}</span>`;
+                    btn.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0) return;
+                        e.preventDefault();
+                        if (!btn.disabled && spawnUnit(i)) {
+                            btn.classList.add('clicked');
+                            setTimeout(() => btn.classList.remove('clicked'), 150);
+                        }
+                    });
+                    cachedButtons.unitBtns.push(btn);
+                    controls.appendChild(btn);
+                });
+
+                // Эволюция
+                if (game.era < 4) {
+                    const evolveBtn = document.createElement('button');
+                    evolveBtn.className = 'btn evolve-btn';
+                    evolveBtn.innerHTML = `Эволюция<br>${ERAS[game.era + 1].name} <span class="hotkey">E</span>`;
+                    evolveBtn.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0 || evolveBtn.disabled) return;
+                        e.preventDefault();
+                        evolve();
+                    });
+                    cachedButtons.evolveBtn = evolveBtn;
+                    controls.appendChild(evolveBtn);
+                }
+
+                // Разделитель
+                controls.appendChild(Object.assign(document.createElement('div'), { className: 'separator' }));
+
+                // Улучшения базы
+                [
+                    { type: 'turret', name: 'Турель', hotkey: 'Q', getLevel: () => game.turretLevel, max: BALANCE.maxUpgradeLevel },
+                    { type: 'income', name: 'Доход', hotkey: 'W', getLevel: () => game.incomeLevel, max: BALANCE.maxUpgradeLevel },
+                    { type: 'baseHp', name: 'HP базы', hotkey: 'R', getLevel: () => game.baseHpLevel, max: BALANCE.maxUpgradeLevel }
+                ].forEach(upg => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn upgrade-btn';
+                    btn.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0 || btn.disabled) return;
+                        e.preventDefault();
+                        upgrade(upg.type);
+                    });
+                    cachedButtons.upgradeBtns[upg.type] = { btn, ...upg };
+                    controls.appendChild(btn);
+                });
+
+                // Разделитель
+                controls.appendChild(Object.assign(document.createElement('div'), { className: 'separator' }));
+
+                // Улучшения юнитов
+                [
+                    { type: 'attack', name: 'Атака', hotkey: 'A', getLevel: () => game.unitAttackLevel, max: BALANCE.maxUnitUpgradeLevel, color: '#FF6666' },
+                    { type: 'health', name: 'HP', hotkey: 'S', getLevel: () => game.unitHealthLevel, max: BALANCE.maxUnitUpgradeLevel, color: '#66FF66' },
+                    { type: 'regen', name: 'Реген', hotkey: 'D', getLevel: () => game.unitRegenLevel, max: BALANCE.maxUnitUpgradeLevel, color: '#66FFFF' }
+                ].forEach(upg => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn unit-upgrade-btn';
+                    btn.style.background = `linear-gradient(135deg, ${upg.color}88 0%, ${upg.color}44 100%)`;
+                    btn.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0 || btn.disabled) return;
+                        e.preventDefault();
+                        upgrade(upg.type);
+                    });
+                    cachedButtons.upgradeBtns[upg.type] = { btn, ...upg };
+                    controls.appendChild(btn);
+                });
+
+                // Разделитель
+                controls.appendChild(Object.assign(document.createElement('div'), { className: 'separator' }));
+
+                // Спецспособность
+                const specialBtn = document.createElement('button');
+                specialBtn.className = 'btn special-btn';
+                specialBtn.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0 || specialBtn.disabled) return;
+                    e.preventDefault();
+                    useSpecial();
+                });
+                cachedButtons.specialBtn = specialBtn;
+                controls.appendChild(specialBtn);
+
+                // Скорость
+                [1, 2, 3].forEach(speed => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn speed-btn' + (gameSpeed === speed ? ' active' : '');
+                    btn.textContent = `${speed}x`;
+                    btn.addEventListener('click', () => {
+                        gameSpeed = speed;
+                        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                    controls.appendChild(btn);
+                });
+            }
+
+            updateButtonStates(currentGold);
+        }
+
+        function updateButtonStates(currentGold) {
+            if (isProcessingClick || !cachedButtons.unitBtns) return;
+
+            cachedButtons.unitBtns.forEach(btn => {
+                const cost = parseInt(btn.dataset.cost);
+                btn.disabled = currentGold < cost;
+                btn.classList.toggle('affordable', currentGold >= cost);
+            });
+
+            if (cachedButtons.evolveBtn) {
+                const canEvolve = game.xp >= ERAS[game.era + 1].xpRequired;
+                cachedButtons.evolveBtn.disabled = !canEvolve;
+                cachedButtons.evolveBtn.classList.toggle('affordable', canEvolve);
+            }
+
+            Object.values(cachedButtons.upgradeBtns).forEach(upg => {
+                const level = upg.getLevel();
+                const isMaxed = level >= upg.max;
+                const cost = getUpgradeCost(upg.type);
+                const canAfford = currentGold >= cost;
+
+                upg.btn.classList.toggle('maxed', isMaxed);
+                upg.btn.classList.toggle('affordable', canAfford && !isMaxed);
+                upg.btn.disabled = isMaxed || !canAfford;
+                upg.btn.innerHTML = isMaxed ?
+                    `${upg.name} MAX<br><span class="hotkey">${upg.hotkey}</span>` :
+                    `${upg.name} ${level}<br>${cost}g <span class="hotkey">${upg.hotkey}</span>`;
+            });
+
+            if (cachedButtons.specialBtn) {
+                const cooldownSec = Math.ceil(game.specialCooldown / 1000);
+                const canUse = currentGold >= BALANCE.special.cost && game.specialCooldown <= 0;
+                cachedButtons.specialBtn.disabled = !canUse;
+                cachedButtons.specialBtn.classList.toggle('affordable', canUse);
+                cachedButtons.specialBtn.innerHTML = game.specialCooldown > 0 ?
+                    `Удар (${cooldownSec}с)<br><span class="hotkey">Space</span>` :
+                    `Удар!<br>${BALANCE.special.cost}g <span class="hotkey">Space</span>`;
+            }
+        }
+
+        // ==================== РЕНДЕРИНГ ====================
+        function render() {
+            // Тряска
+            const shakeX = screenShake > 0 ? (Math.random() - 0.5) * screenShake : 0;
+            const shakeY = screenShake > 0 ? (Math.random() - 0.5) * screenShake : 0;
+
+            ctx.save();
+            ctx.translate(shakeX, shakeY);
+
+            // Фон
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#4a90a4');
+            gradient.addColorStop(0.55, '#6BB3D9');
+            gradient.addColorStop(0.6, '#228B22');
+            gradient.addColorStop(1, '#1a5c1a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(-10, -10, canvas.width + 20, canvas.height + 20);
+
+            // Облака
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            const time = Date.now() / 100;
+            for (let i = 0; i < 4; i++) {
+                const x = ((time + i * 250) % 1100) - 50;
+                ctx.beginPath();
+                ctx.arc(x, 40 + i * 25, 20, 0, Math.PI * 2);
+                ctx.arc(x + 15, 35 + i * 25, 15, 0, Math.PI * 2);
+                ctx.arc(x + 30, 40 + i * 25, 20, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Дорога
+            ctx.fillStyle = '#8B7355';
+            ctx.fillRect(0, 295, canvas.width, 55);
+            ctx.fillStyle = '#6B5344';
+            ctx.fillRect(0, 340, canvas.width, 10);
+            ctx.strokeStyle = '#A09080';
+            ctx.setLineDash([20, 30]);
+            ctx.beginPath();
+            ctx.moveTo(0, 322);
+            ctx.lineTo(canvas.width, 322);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Базы
+            drawBase(game.playerBase, false);
+            drawBase(game.enemyBase, true);
+
+            // Юниты
+            [...game.playerUnits, ...game.enemyUnits].sort((a, b) => a.y - b.y).forEach(drawUnit);
+
+            // Снаряды
+            game.projectiles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+
+            // Эффекты
+            game.effects.forEach(e => {
+                ctx.globalAlpha = e.timer / 40;
+
+                if (e.type === 'special') {
+                    const radius = (40 - e.timer) * 20;
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#FF6600';
+                    ctx.lineWidth = 10;
+                    ctx.stroke();
+                } else if (e.type === 'evolve') {
+                    ctx.fillStyle = '#00FF00';
+                    ctx.font = 'bold 36px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(e.text + '!', e.x, e.y);
+                } else if (e.type === 'enemyEvolve') {
+                    ctx.fillStyle = '#FF0000';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(e.text, e.x, e.y);
+                } else if (e.type === 'spawn') {
+                    const radius = (20 - e.timer) * 2;
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#00FF00';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (e.type === 'death') {
+                    // Взрыв частиц
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i / 5) * Math.PI * 2 + e.timer * 0.2;
+                        const dist = (15 - e.timer) * 3;
+                        ctx.beginPath();
+                        ctx.arc(e.x + Math.cos(angle) * dist, e.y + Math.sin(angle) * dist, 3, 0, Math.PI * 2);
+                        ctx.fillStyle = e.color;
+                        ctx.fill();
+                    }
+                }
+
+                ctx.globalAlpha = 1;
+            });
+
+            // Числа урона
+            game.damageNumbers.forEach(d => {
+                ctx.globalAlpha = d.timer / 45;
+                ctx.fillStyle = d.color;
+                ctx.font = d.isText ? 'bold 16px Arial' : 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(d.isText ? d.damage : '-' + d.damage, d.x, d.y);
+                ctx.globalAlpha = 1;
+            });
+
+            // Волна-таймер
+            if (!game.isBossWave) {
+                const nextWaveIn = Math.ceil(game.waveTimer / 1000);
+                if (nextWaveIn <= 5) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`Волна ${game.wave + 1} через ${nextWaveIn}...`, canvas.width / 2, 30);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function drawBase(base, isEnemy) {
+            const x = base.x;
+            const era = isEnemy ? game.enemyEra : game.era;
+            const colors = ['#8B4513', '#708090', '#4A4A4A', '#2F4F4F', '#4B0082'];
+
+            // Тень
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(x, 355, 50, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Основание
+            ctx.fillStyle = colors[era];
+            ctx.fillRect(x - 45, 245, 90, 105);
+
+            // Крыша
+            ctx.beginPath();
+            ctx.moveTo(x - 55, 245);
+            ctx.lineTo(x, 190);
+            ctx.lineTo(x + 55, 245);
+            ctx.fillStyle = isEnemy ? '#8B0000' : '#006400';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Турель
+            const turretLevel = isEnemy ? Math.min(game.enemyEra + 1, 5) : game.turretLevel;
+            const turretSize = 12 + turretLevel * 2;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - turretSize / 2, 255, turretSize, turretSize);
+            ctx.fillStyle = '#555';
+            const dir = isEnemy ? -1 : 1;
+            ctx.fillRect(x + dir * turretSize / 2, 258, (20 + turretLevel * 3) * dir, 8);
+
+            // Флаг
+            ctx.fillStyle = '#5C4033';
+            ctx.fillRect(x - 2, 170, 4, 25);
+            const wave = Math.sin(Date.now() / 200) * 3;
+            ctx.fillStyle = isEnemy ? '#FF0000' : '#00FF00';
+            ctx.beginPath();
+            ctx.moveTo(x + 2, 170);
+            ctx.lineTo(x + 25 + wave, 175);
+            ctx.lineTo(x + 2, 182);
+            ctx.fill();
+        }
+
+        function drawUnit(unit) {
+            const { x, y, size, color, isEnemy, isBoss, currentHp, maxHp, regenRate, name } = unit;
+            const dir = isEnemy ? -1 : 1;
+            const s = size / 22;
+
+            // Тень
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 5, size / 2, size / 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(x, y);
+
+            switch(name) {
+                // ===== КАМЕННЫЙ ВЕК =====
+                case 'Дубинщик':
+                    drawBody('#8B4513', size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    // Волосы
+                    ctx.fillStyle = '#4a3728';
+                    for(let i = -2; i <= 2; i++) {
+                        ctx.beginPath();
+                        ctx.ellipse(i * 3, -size - 10, 3, 7, i * 0.2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // Дубина
+                    ctx.fillStyle = '#5C4033';
+                    ctx.save();
+                    ctx.translate(dir * 12, -size/2);
+                    ctx.rotate(dir * 0.4);
+                    ctx.fillRect(-2, -20, 5, 28);
+                    ctx.fillStyle = '#3a2515';
+                    ctx.beginPath();
+                    ctx.arc(0, -22, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                    break;
+
+                case 'Копейщик':
+                    drawBody('#A0522D', size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    // Повязка
+                    ctx.fillStyle = '#8B0000';
+                    ctx.fillRect(-7, -size - 8, 14, 4);
+                    // Копьё
+                    ctx.fillStyle = '#5C4033';
+                    ctx.fillRect(dir * 10, -size - 15, 3, 40);
+                    ctx.fillStyle = '#888';
+                    ctx.beginPath();
+                    ctx.moveTo(dir * 11.5, -size - 15);
+                    ctx.lineTo(dir * 11.5 - 5, -size - 25);
+                    ctx.lineTo(dir * 11.5 + 5, -size - 25);
+                    ctx.fill();
+                    break;
+
+                case 'Камнемёт':
+                    ctx.fillStyle = '#6B4423';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 + 3, size/2, size/2.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size + 2, size/3.2, isEnemy);
+                    // Праща
+                    ctx.strokeStyle = '#5C4033';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(dir * 8, -size/2);
+                    ctx.quadraticCurveTo(dir * 22, -size, dir * 14, -size - 12);
+                    ctx.stroke();
+                    ctx.fillStyle = '#666';
+                    ctx.beginPath();
+                    ctx.arc(dir * 14, -size - 12, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                // ===== СРЕДНЕВЕКОВЬЕ =====
+                case 'Мечник':
+                    drawBody('#4169E1', size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    // Шлем
+                    ctx.fillStyle = '#708090';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 4, size/3, Math.PI, 0);
+                    ctx.fill();
+                    // Меч
+                    ctx.fillStyle = '#C0C0C0';
+                    ctx.fillRect(dir * 12, -size/2 - 12, 3, 22);
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(dir * 12 - 3, -size/2 + 8, 9, 4);
+                    break;
+
+                case 'Рыцарь':
+                    // Броня
+                    ctx.fillStyle = '#B8B8B8';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2, size/2, size/1.7, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#888';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(-size/3, -size/2);
+                    ctx.lineTo(size/3, -size/2);
+                    ctx.stroke();
+                    // Шлем
+                    ctx.fillStyle = '#A8A8A8';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 3, size/2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(-5, -size - 4, 10, 3);
+                    // Плюмаж
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size - size/2 - 5, 3, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Большой меч
+                    ctx.fillStyle = '#C0C0C0';
+                    ctx.fillRect(dir * 14, -size - 5, 4, 30);
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(dir * 14 - 4, -size/2 + 8, 12, 5);
+                    break;
+
+                case 'Лучник':
+                    // Плащ
+                    ctx.fillStyle = '#228B22';
+                    ctx.beginPath();
+                    ctx.moveTo(-8, -size + 8);
+                    ctx.lineTo(8, -size + 8);
+                    ctx.lineTo(6, 0);
+                    ctx.lineTo(-6, 0);
+                    ctx.fill();
+                    drawBody('#228B22', size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    // Капюшон
+                    ctx.fillStyle = '#1a6b1a';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 2, size/3, Math.PI * 0.75, Math.PI * 0.25);
+                    ctx.fill();
+                    // Лук
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(dir * 14, -size/2, 15, -Math.PI/2, Math.PI/2);
+                    ctx.stroke();
+                    ctx.strokeStyle = '#DDD';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(dir * 14, -size/2 - 15);
+                    ctx.lineTo(dir * 14, -size/2 + 15);
+                    ctx.stroke();
+                    break;
+
+                // ===== ЭПОХА ПОРОХА =====
+                case 'Мушкетёр':
+                    drawBody('#8B0000', size);
+                    // Пуговицы
+                    ctx.fillStyle = '#FFD700';
+                    for(let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(0, -size/2 - 6 + i*6, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    // Треуголка
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.beginPath();
+                    ctx.moveTo(-10, -size - 4);
+                    ctx.lineTo(10, -size - 4);
+                    ctx.lineTo(0, -size - 14);
+                    ctx.fill();
+                    // Мушкет
+                    ctx.fillStyle = '#5C4033';
+                    ctx.fillRect(dir * 8, -size/2, 20, 4);
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(dir * 8 + dir * 16, -size/2 - 1, 6, 6);
+                    break;
+
+                case 'Кавалерия':
+                    // Лошадь
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/3 + 5, size/1.4, size/2.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(dir * 18, -size/2 + 3, 7, 10, dir * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Ноги
+                    ctx.fillStyle = '#6B4423';
+                    const legAnim = Math.sin(Date.now() / 100) * 4;
+                    ctx.fillRect(-10, -3, 4, 12 + legAnim);
+                    ctx.fillRect(6, -3, 4, 12 - legAnim);
+                    // Всадник
+                    ctx.fillStyle = '#DAA520';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 - 10, 7, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size - 5, 5, isEnemy);
+                    // Сабля
+                    ctx.strokeStyle = '#C0C0C0';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(dir * 10, -size/2 - 8);
+                    ctx.quadraticCurveTo(dir * 22, -size/2, dir * 18, -size/2 + 12);
+                    ctx.stroke();
+                    break;
+
+                case 'Канонир':
+                    ctx.fillStyle = '#2F4F4F';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 + 4, size/2, size/2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size + 5, size/3.5, isEnemy);
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(-6, -size + 2, 12, 4);
+                    // Пушка
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(dir * 4, -size/2 + 6, 16, 8);
+                    ctx.fillStyle = '#333';
+                    ctx.beginPath();
+                    ctx.arc(dir * 8, -size/2 + 16, 5, 0, Math.PI * 2);
+                    ctx.arc(dir * 16, -size/2 + 16, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#555';
+                    ctx.fillRect(dir * 16, -size/2 + 4, 12, 6);
+                    break;
+
+                // ===== СОВРЕМЕННОСТЬ =====
+                case 'Солдат':
+                    drawBody('#556B2F', size);
+                    ctx.fillStyle = '#3d4f22';
+                    ctx.beginPath();
+                    ctx.arc(-4, -size/2 - 4, 3, 0, Math.PI * 2);
+                    ctx.arc(3, -size/2 + 2, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    // Каска
+                    ctx.fillStyle = '#556B2F';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 2, size/2.5, Math.PI, 0);
+                    ctx.fill();
+                    // Автомат
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.fillRect(dir * 7, -size/2 - 4, 18, 4);
+                    ctx.fillRect(dir * 7, -size/2, 3, 8);
+                    ctx.fillStyle = '#5C4033';
+                    ctx.fillRect(dir * 22, -size/2 - 4, 6, 4);
+                    break;
+
+                case 'Танк':
+                    // Гусеницы
+                    ctx.fillStyle = '#2a2a2a';
+                    ctx.fillRect(-size/2, -6, size, 14);
+                    ctx.fillStyle = '#3d3d3d';
+                    for(let i = 0; i < 4; i++) {
+                        ctx.beginPath();
+                        ctx.arc(-size/2 + 8 + i * (size-16)/3, 0, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // Корпус
+                    ctx.fillStyle = '#3D5C3D';
+                    ctx.beginPath();
+                    ctx.moveTo(-size/2 + 4, -6);
+                    ctx.lineTo(size/2 - 4, -6);
+                    ctx.lineTo(size/2 - 8, -size/2 + 5);
+                    ctx.lineTo(-size/2 + 8, -size/2 + 5);
+                    ctx.fill();
+                    // Башня
+                    ctx.fillStyle = '#4a6b4a';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2, size/3.5, size/4.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Пушка
+                    ctx.fillStyle = '#2F4F2F';
+                    ctx.fillRect(dir * 4, -size/2 - 3, dir * 25, 5);
+                    break;
+
+                case 'Снайпер':
+                    ctx.fillStyle = '#708090';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2, size/2.2, size/1.8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#5a6a5a';
+                    for(let i = 0; i < 6; i++) {
+                        ctx.beginPath();
+                        ctx.ellipse(Math.cos(i) * 6, -size/2 + Math.sin(i) * 8, 2, 5, i, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+                    ctx.fillStyle = '#5a6a5a';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 1, size/2.2, Math.PI * 0.7, Math.PI * 0.3);
+                    ctx.fill();
+                    // Винтовка
+                    ctx.fillStyle = '#2a2a2a';
+                    ctx.fillRect(dir * 4, -size/2 - 2, 28, 3);
+                    ctx.fillStyle = '#444';
+                    ctx.beginPath();
+                    ctx.arc(dir * 26, -size/2 - 2, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                // ===== БУДУЩЕЕ =====
+                case 'Киборг':
+                    ctx.fillStyle = '#00CED1';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2, size/2.2, size/1.8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#4a4a4a';
+                    ctx.beginPath();
+                    ctx.arc(-5, -size/2, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillRect(3, -size/2 - 8, 6, 16);
+                    // Голова с кибер-глазом
+                    ctx.fillStyle = '#FFE4C4';
+                    ctx.beginPath();
+                    ctx.arc(0, -size - 2, size/3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.arc(dir * 3, -size - 3, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(255,0,0,0.4)';
+                    ctx.beginPath();
+                    ctx.arc(dir * 3, -size - 3, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Плазма-ружьё
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(dir * 8, -size/2 - 2, 16, 5);
+                    ctx.fillStyle = '#00FFFF';
+                    ctx.fillRect(dir * 22, -size/2 - 1, 4, 3);
+                    break;
+
+                case 'Мех':
+                    // Ноги
+                    ctx.fillStyle = '#6a5acd';
+                    ctx.fillRect(-12, -8, 7, 18);
+                    ctx.fillRect(5, -8, 7, 18);
+                    // Корпус
+                    ctx.fillStyle = '#9400D3';
+                    ctx.beginPath();
+                    ctx.moveTo(-size/2, -8);
+                    ctx.lineTo(size/2, -8);
+                    ctx.lineTo(size/2 - 4, -size/2 - 8);
+                    ctx.lineTo(-size/2 + 4, -size/2 - 8);
+                    ctx.fill();
+                    // Кабина
+                    ctx.fillStyle = '#5a3a7a';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 - 12, size/3.5, size/4.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(0,255,255,0.5)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 - 12, size/5, size/6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Оружие на плечах
+                    ctx.fillStyle = '#555';
+                    ctx.fillRect(-size/2 + 4, -size/2 - 20, 5, 12);
+                    ctx.fillRect(size/2 - 9, -size/2 - 20, 5, 12);
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.arc(-size/2 + 6.5, -size/2 - 20, 2.5, 0, Math.PI * 2);
+                    ctx.arc(size/2 - 6.5, -size/2 - 20, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'Дрон':
+                    const hover = Math.sin(Date.now() / 150) * 3;
+                    ctx.translate(0, hover - 5);
+                    // Корпус
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -size/2 + 5, size/1.8, size/3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Пропеллеры
+                    ctx.fillStyle = 'rgba(150,150,150,0.6)';
+                    const propAngle = Date.now() / 25;
+                    ctx.beginPath();
+                    ctx.ellipse(-10, -size/2 - 3, 8, 2, propAngle, 0, Math.PI * 2);
+                    ctx.ellipse(10, -size/2 - 3, 8, 2, -propAngle, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Пушка
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(-2, -size/2 + 8, 4, 10);
+                    // Глаз
+                    ctx.fillStyle = '#00FF00';
+                    ctx.beginPath();
+                    ctx.arc(dir * 6, -size/2 + 5, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                default:
+                    drawBody(color, size);
+                    drawHead2(0, -size - 2, size/3.5, isEnemy);
+            }
+
+            ctx.restore();
+
+            // Корона босса
+            if (isBoss) {
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.moveTo(x - 10, y - size - size/3);
+                ctx.lineTo(x - 6, y - size - size/3 - 10);
+                ctx.lineTo(x, y - size - size/3 - 5);
+                ctx.lineTo(x + 6, y - size - size/3 - 10);
+                ctx.lineTo(x + 10, y - size - size/3);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y - size/2, size/1.4 + Math.sin(Date.now()/200) * 2, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // HP бар
+            const hpPercent = Math.max(0, currentHp / maxHp);
+            const barWidth = isBoss ? 45 : 28;
+            const barY = y - size - size/2 - 5;
+
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x - barWidth/2 - 1, barY - 1, barWidth + 2, 7);
+            ctx.fillStyle = isEnemy ? '#FF4444' : '#44FF44';
+            ctx.fillRect(x - barWidth/2, barY, barWidth * hpPercent, 5);
+
+            if (regenRate > 0 && currentHp < maxHp) {
+                ctx.fillStyle = '#66FFFF';
+                ctx.fillRect(x - barWidth/2 + barWidth * hpPercent, barY, 2, 5);
+            }
+        }
+
+        function drawBody(color, size) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.ellipse(0, -size/2, size/2.2, size/1.8, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawHead2(hx, hy, r, isEnemy) {
+            ctx.fillStyle = '#FFE4C4';
+            ctx.beginPath();
+            ctx.arc(hx, hy, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(hx + (isEnemy ? -2 : 2), hy - 1, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // ==================== КОНЕЦ ИГРЫ ====================
+        function endGame(victory) {
+            game.gameOver = true;
+
+            const overlay = document.getElementById('gameOver');
+            overlay.style.display = 'flex';
+            overlay.className = victory ? 'victory' : 'defeat';
+            overlay.querySelector('h2').textContent = victory ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ';
+
+            const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+
+            overlay.querySelector('.stats').innerHTML = `
+                Волн пройдено: ${game.wave - 1}<br>
+                Убийств: ${game.kills} | Макс комбо: ${game.maxCombo}<br>
+                Время: ${mins}:${secs.toString().padStart(2, '0')}
+            `;
+        }
+
+        // ==================== УПРАВЛЕНИЕ ====================
+        document.addEventListener('keydown', (e) => {
+            if (game.gameOver) return;
+
+            const key = e.key.toLowerCase();
+
+            if (key === 'p' || key === 'escape') {
+                game.paused = !game.paused;
+                document.getElementById('pauseOverlay').style.display = game.paused ? 'flex' : 'none';
+                return;
+            }
+
+            if (game.paused) return;
+
+            const actions = {
+                '1': () => spawnUnit(0),
+                '2': () => spawnUnit(1),
+                '3': () => spawnUnit(2),
+                'e': evolve,
+                'q': () => upgrade('turret'),
+                'w': () => upgrade('income'),
+                'r': () => upgrade('baseHp'),
+                'a': () => upgrade('attack'),
+                's': () => upgrade('health'),
+                'd': () => upgrade('regen'),
+                ' ': () => { e.preventDefault(); useSpecial(); }
+            };
+
+            if (actions[key]) actions[key]();
+        });
+
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+
+        // ==================== СТАРТ ====================
+        initGame();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>

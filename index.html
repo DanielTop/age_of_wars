@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Catalog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Каталог игр -->
+        <div id="catalog" class="catalog">
+            <header>
+                <h1>Game Catalog</h1>
+                <p class="subtitle">Games by DanielTop</p>
+            </header>
+
+            <div id="games-grid" class="games-grid">
+                <!-- Карточки игр загружаются динамически -->
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading games...</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;">
+                <p>Failed to load games. <button onclick="loadGames()">Try again</button></p>
+            </div>
+        </div>
+
+        <!-- Контейнер для игры -->
+        <div id="game-container" class="game-container" style="display: none;">
+            <div class="game-header">
+                <button id="back-btn" class="back-btn">← Back to Catalog</button>
+                <h2 id="game-title"></h2>
+                <a id="fullscreen-btn" class="fullscreen-btn" target="_blank">Open in new tab ↗</a>
+            </div>
+            <iframe id="game-frame" class="game-frame" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
